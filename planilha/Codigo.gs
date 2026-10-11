@@ -1,5 +1,5 @@
 // =====================================================
-//  MISSÕES DO JOÃO — servidor (Google Apps Script) v9
+//  MISSÕES DO JOÃO — servidor (Google Apps Script) v10
 //  A TELA do app agora fica no GitHub:
 //    https://thiagogaldinozicao-source.github.io/missoes-do-joao/
 //  Este código é só a "ponte" entre o app e a planilha.
@@ -26,6 +26,10 @@ const COMBO_PTS = 100;
 const BAU = [[10, 30], [20, 30], [30, 20], [50, 15], [100, 5]]; // [pontos, chance %]
 const BAU_LENDARIO = 150;  // no 7º dia seguido de login o baú é lendário
 
+// 🧢 TETO DO DIA: máximo de pontos de missões DIÁRIAS por dia (0 = sem teto).
+// O que passar do teto não vira ponto, só XP (metas da semana, baú e combo não contam no teto).
+const TETO_DIA = 500;
+
 // 📧 Te avisa por e-mail (no seu Gmail) quando o João pedir algo
 const AVISAR_EMAIL = true;
 
@@ -39,7 +43,7 @@ const TZ = 'America/Sao_Paulo';
 const ABA = 'Historico';
 const ABA_M = 'Missoes';
 const ABA_P = 'Premios';
-const CAB = ['Data', 'Tipo', 'Descrição', 'Pontos', 'Bike (R$)', 'Status', 'ID', 'Chave', 'Quem'];
+const CAB = ['Data', 'Tipo', 'Descrição', 'Pontos', 'Bike (R$)', 'Status', 'ID', 'Chave', 'Quem', 'Obs'];
 
 // Listas iniciais (só usadas na 1ª vez; depois vale o que estiver na planilha)
 const MISSOES_PADRAO = [
@@ -231,7 +235,7 @@ function lerHist_() {
       linha: i + 2, data: data, tipo: String(r[1]), desc: String(r[2]),
       pts: Number(r[3]) || 0, bike: Number(r[4]) || 0,
       status: String(r[5] || 'Aprovado'), id: String(r[6] || ''),
-      chave: String(r[7] || ''), quem: String(r[8] || '')
+      chave: String(r[7] || ''), quem: String(r[8] || ''), obs: String(r[9] || '')
     };
   }).filter(function (h) { return !isNaN(h.data); });
 }
@@ -245,15 +249,28 @@ function getEstado() {
   let premios = 0, trocasBike = 0, missoes = 0;
   const pendentes = [];
   let comboFeitas = 0, comboFeito = false, bauHoje = 0;
-  const diasBau = {};
+  const diasBau = {}, ptsDia = {};
+  let semPts = 0, semMissoes = 0, ultimo = '';
 
   hist.forEach(function (h) {
     const aprovado = h.status === 'Aprovado';
     const pendente = h.status === 'Pendente';
     const ehMissao = h.tipo === 'Missão' || h.tipo === 'Meta';
+    if (h.quem !== 'App') ultimo = h.desc;
     if (aprovado) {
-      pontos += h.pts; bike += h.bike;
+      // teto do dia: só missões diárias; o que passar vira só XP
+      let ganho = h.pts;
+      if (h.tipo === 'Missão' && TETO_DIA > 0 && h.pts > 0) {
+        const dd = dia_(h.data), usado = ptsDia[dd] || 0;
+        ganho = Math.max(0, Math.min(h.pts, TETO_DIA - usado));
+        ptsDia[dd] = usado + h.pts;
+      }
+      pontos += ganho; bike += h.bike;
       if (h.pts > 0) xp += h.pts;
+      if (semana_(h.data) === semana) {
+        if (ganho > 0) semPts += ganho;
+        if (ehMissao) semMissoes++;
+      }
       if (ehMissao) {
         missoes++;
         dias[dia_(h.data)] = true;
@@ -294,14 +311,16 @@ function getEstado() {
   });
 
   const ultimos = hist.slice(-12).reverse().map(function (h) {
-    return { t: h.desc, v: h.pts, b: h.bike, s: h.status, tipo: h.tipo };
+    return { t: h.desc, v: h.pts, b: h.bike, s: h.status, tipo: h.tipo, o: h.obs };
   });
 
   return {
     pontos: pontos, disponivel: pontos - reservado, xp: xp, bike: bike,
-    hist: ultimos, pendentes: pendentes, feitoHoje: feitoHoje, feitoSemana: feitoSemana,
+    hist: ultimos, ultimo: ultimo, pendentes: pendentes, feitoHoje: feitoHoje, feitoSemana: feitoSemana,
     ofensiva: ofensiva, maiorOfensiva: maior,
     combo: { feitas: comboFeitas, feito: comboFeito, min: COMBO_MIN, pts: COMBO_PTS },
+    teto: { usado: ptsDia[hoje] || 0, max: TETO_DIA },
+    semana: { pts: semPts, missoes: semMissoes },
     bauHoje: bauHoje, login: login,
     stats: { missoes: missoes, premios: premios, trocasBike: trocasBike, porChave: porChave },
     cfg: cfg,
@@ -319,9 +338,9 @@ function comLock_(fn) {
   try { return fn(); } finally { lock.releaseLock(); }
 }
 
-function novaLinha_(tipo, desc, pts, bike, status, chave, quem) {
+function novaLinha_(tipo, desc, pts, bike, status, chave, quem, data, obs) {
   const id = Utilities.getUuid().slice(0, 8);
-  aba_().appendRow([new Date(), tipo, desc, pts, bike || '', status, id, chave || '', quem]);
+  aba_().appendRow([data || new Date(), tipo, desc, pts, bike || '', status, id, chave || '', quem, obs || '']);
   return id;
 }
 
@@ -339,11 +358,19 @@ function jaFeita_(e, m) {
   return m.semanal ? e.feitoSemana[m.chave] : e.feitoHoje[m.chave];
 }
 
-// Dá o bônus do combo quando chega em 3 missões aprovadas no dia
-function combo_() {
-  const e = getEstado();
-  if (!e.combo.feito && e.combo.feitas >= COMBO_MIN) {
-    novaLinha_('Bônus', '🔥 Combo do dia (' + COMBO_MIN + ' missões)', COMBO_PTS, '', 'Aprovado', 'combo', 'App');
+// Dá o bônus do combo quando o dia chega em 3 missões aprovadas.
+// Conta pelo dia em que o João FEZ (data do pedido), não pelo dia em que o pai aprovou.
+function combo_(dataRef) {
+  dataRef = dataRef || new Date();
+  const dia = dia_(dataRef);
+  let feitas = 0, jaTem = false;
+  lerHist_().forEach(function (h) {
+    if (h.status !== 'Aprovado' || dia_(h.data) !== dia) return;
+    if (h.tipo === 'Missão') feitas++;
+    if (h.chave === 'combo') jaTem = true;
+  });
+  if (!jaTem && feitas >= COMBO_MIN) {
+    novaLinha_('Bônus', '🔥 Combo do dia (' + COMBO_MIN + ' missões)', COMBO_PTS, '', 'Aprovado', 'combo', 'App', dataRef);
   }
 }
 
@@ -420,7 +447,7 @@ function marcarMissao(senha, chave) {
     if (st === 'feito') throw new Error(m.semanal ? 'Já marcada essa semana' : 'Já marcada hoje');
     if (st === 'pendente') {
       const pend = lerHist_().filter(function (h) { return h.status === 'Pendente' && h.chave === m.chave; }).pop();
-      if (pend) { aba_().getRange(pend.linha, 6).setValue('Aprovado'); combo_(); return getEstado(); }
+      if (pend) { aba_().getRange(pend.linha, 6).setValue('Aprovado'); combo_(pend.data); return getEstado(); }
     }
     novaLinha_(m.semanal ? 'Meta' : 'Missão', m.emoji + ' ' + m.nome, m.pts, '', 'Aprovado', m.chave, 'Pai');
     combo_();
@@ -469,7 +496,7 @@ function ajustarPontos(senha, pontos, motivo) {
 }
 
 // ---------- PAI: aprova / recusa pedidos ----------
-function decidir(senha, id, aprovar) {
+function decidir(senha, id, aprovar, motivo) {
   exigirSenha_(senha);
   return comLock_(function () {
     const h = lerHist_().filter(function (x) { return x.id === id && x.status === 'Pendente'; })[0];
@@ -479,16 +506,33 @@ function decidir(senha, id, aprovar) {
       if (e.pontos < -h.pts) throw new Error('Ele não tem pontos suficientes pra isso');
     }
     aba_().getRange(h.linha, 6).setValue(aprovar ? 'Aprovado' : 'Recusado');
-    if (aprovar && h.tipo === 'Missão') combo_();
+    if (!aprovar && motivo) aba_().getRange(h.linha, 10).setValue(String(motivo).trim());
+    if (aprovar && h.tipo === 'Missão') combo_(h.data);
     return getEstado();
   });
 }
 
+// Apaga o último lançamento feito por gente (pula os automáticos, tipo o combo).
+// Se era uma missão e o combo daquele dia deixou de valer, apaga o combo junto.
 function desfazerUltimo(senha) {
   exigirSenha_(senha);
   return comLock_(function () {
     const sh = aba_();
-    if (sh.getLastRow() > 1) sh.deleteRow(sh.getLastRow());
+    const hist = lerHist_();
+    let alvo = null;
+    for (let i = hist.length - 1; i >= 0; i--) { if (hist[i].quem !== 'App') { alvo = hist[i]; break; } }
+    if (!alvo) return getEstado();
+    sh.deleteRow(alvo.linha);
+    if (alvo.tipo === 'Missão' && alvo.status === 'Aprovado') {
+      const dia = dia_(alvo.data);
+      let feitas = 0, combo = null;
+      lerHist_().forEach(function (h) {
+        if (h.status !== 'Aprovado' || dia_(h.data) !== dia) return;
+        if (h.tipo === 'Missão') feitas++;
+        if (h.chave === 'combo') combo = h;
+      });
+      if (combo && feitas < COMBO_MIN) sh.deleteRow(combo.linha);
+    }
     return getEstado();
   });
 }

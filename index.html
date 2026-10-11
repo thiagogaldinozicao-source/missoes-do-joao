@@ -148,6 +148,20 @@
   .act.wait{background:var(--gold-soft);color:var(--gold);cursor:default;}
   .act.fin{background:transparent;color:var(--green);cursor:default;}
   .act.off{background:var(--surface2);color:var(--muted);cursor:default;font-size:.74rem;}
+  .act.zap{display:inline-flex;align-items:center;justify-content:center;background:#25d366;color:#07321a;text-decoration:none;box-shadow:0 3px 0 #178f45;}
+  .act.zap:active{box-shadow:0 0 0 transparent;transform:translateY(3px) scale(.96);}
+  .item .val .xp{color:var(--muted);font-weight:800;}
+
+  /* RESUMO DA SEMANA / TETO */
+  .wk{display:none;margin-top:10px;justify-content:center;gap:14px;font-size:.76rem;font-weight:800;color:var(--muted);}
+  .wk.on{display:flex;}
+  .wk b{color:var(--text);}
+  .teto{display:none;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 12px;margin-bottom:12px;font-size:.78rem;font-weight:800;color:var(--muted);}
+  .teto.on{display:flex;}
+  .teto .tb{flex:1;height:6px;border-radius:4px;background:var(--bg);overflow:hidden;}
+  .teto .tb i{display:block;height:100%;background:var(--muted);border-radius:4px;transition:width .5s;}
+  .teto.full{border-color:var(--gold);color:var(--gold);} .teto.full .tb i{background:var(--gold);}
+  .hist .obs{display:block;color:var(--red);font-size:.72rem;font-weight:700;}
 
   /* CONQUISTAS */
   .badges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
@@ -317,6 +331,7 @@
     </div>
     <div class="bar"><i id="barfill" style="width:0%"></i></div>
     <div class="barlab" id="barlab">Carregando…</div>
+    <div class="wk" id="wk"></div>
     <div class="waiting soJoao" id="waiting"></div>
   </div>
 
@@ -349,9 +364,10 @@
 
   <section id="missoes" class="on">
     <div class="sec-h">Missões de hoje</div>
-    <div class="sec-sub soJoao">Fez? Toca em <b>Fiz!</b> e manda a prova pro pai no zap. Cada uma vale 1 vez por dia.</div>
+    <div class="sec-sub soJoao">Fez? Toca em <b>Fiz!</b>, depois em <b>📸 Mandar prova</b> que abre o zap do pai. Cada uma vale 1 vez por dia.</div>
     <div class="sec-sub soPai">Aprova quando ele mandar a prova. Cada uma vale 1 vez por dia.</div>
     <div class="combo" id="combo"></div>
+    <div class="teto" id="teto"></div>
     <div id="daily"></div>
     <div class="sec-h" style="margin-top:22px;">Metas da semana 🏆</div>
     <div class="sec-sub">Valem mais porque é a semana inteira. 1 vez por semana (seg a dom).</div>
@@ -458,6 +474,10 @@
   ];
 
 
+  // 📲 WhatsApp do pai (só números, com 55 + DDD)
+  var ZAP_PAI = "5535991580070";
+  function zapLink(txt){ return "https://wa.me/" + ZAP_PAI + "?text=" + encodeURIComponent(txt); }
+
   var $ = function(id){ return document.getElementById(id); };
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function n(x){ return Number(x || 0).toLocaleString("pt-BR"); }
@@ -561,10 +581,16 @@
         document.body.classList.remove("busy");
         var m = (err && err.message) || "Sem conexão. Tenta de novo.";
         if(/Senha/.test(m)) sair();
+        if(!E){ // ainda não carregou nada: avisa na tela em vez de ficar em "Carregando…"
+          $("pts").textContent = "—";
+          $("barlab").textContent = "📵 Sem internet. Quando voltar, toca em 🔄 Atualizar.";
+          $("sync").textContent = "";
+        }
         toast("⚠️ " + m, "bad"); som("bad"); vibra([30,40,30]);
       });
     r[fn].apply(r, args);
   }
+  window.addEventListener("online", function(){ atualizar(false); });
   function receber(e, msg, cor, efeito){
     E = e; render();
     if(msg){ toast(msg, cor); som(cor === "bad" ? "bad" : cor === "blue" ? "bike" : cor === "gold" ? "ok" : "coin"); }
@@ -573,9 +599,12 @@
   }
   function atualizar(avisar){
     var tinha = E ? E.pontos : null, pendia = E ? E.pendentes.length : 0;
+    var recusados = function(e){ return (e.hist || []).filter(function(x){ return x.s === "Recusado"; }).length; };
+    var recAntes = E ? recusados(E) : 0;
     call("getEstado", [], function(e){
       var caiu = (tinha !== null && !pin && e.pontos > tinha) ? e.pontos - tinha : 0;
-      receber(e, caiu ? "✅ O pai aprovou! +" + n(caiu) + " pontos" : (avisar ? "Atualizado ✅" : null), null,
+      var recusou = tinha !== null && !pin && recusados(e) > recAntes;
+      receber(e, caiu ? "✅ O pai aprovou! +" + n(caiu) + " pontos" : recusou ? "✕ O pai recusou um pedido. Vê o motivo no histórico" : (avisar ? "Atualizado ✅" : null), recusou && !caiu ? "bad" : null,
         caiu ? function(){ estoura(document.getElementById("pts").getBoundingClientRect(), 50); } : null);
       if(pin && e.pendentes.length > pendia && pendia >= 0 && tinha !== null){ toast("📥 Pedido novo do João!", "gold"); som("ok"); }
       var h = new Date();
@@ -638,7 +667,19 @@
     $("bauseq").textContent = lg ? "📅 " + lg + (lg === 1 ? " dia seguido" : " dias seguidos") + (prox7 === 1 ? " · HOJE é baú lendário 🌟" : " · faltam " + (prox7 - 1) + " pro baú lendário 🌟") : "📅 Entra todo dia: no 7º dia seguido o baú é lendário 🌟";
     $("baufeito").classList.toggle("on", !pin && !!E.bauHoje);
     $("baufeito").textContent = "✅ Baú de hoje aberto (+" + n(E.bauHoje) + ") · 📅 " + lg + (lg === 1 ? " dia seguido" : " dias seguidos") + " · volta amanhã";
-    renderCombo(); renderBike(); renderPedidos(); renderMissoes(); renderPremios(); renderConquistas(); renderHist();
+    var wk = $("wk"), s = E.semana;
+    wk.classList.toggle("on", !!s);
+    if(s) wk.innerHTML = "📅 Essa semana: <b>" + n(s.pts) + " pts</b> · <b>" + s.missoes + (s.missoes === 1 ? " missão" : " missões") + "</b>";
+    renderTeto(); renderCombo(); renderBike(); renderPedidos(); renderMissoes(); renderPremios(); renderConquistas(); renderHist();
+  }
+  function tetoBatido(){ return !!(E && E.teto && E.teto.max > 0 && E.teto.usado >= E.teto.max); }
+  function renderTeto(){
+    var t = E.teto, box = $("teto");
+    if(!t || !t.max){ box.classList.remove("on"); return; }
+    var usado = Math.min(t.usado, t.max), cheio = usado >= t.max;
+    box.classList.add("on"); box.classList.toggle("full", cheio);
+    box.innerHTML = '<span>🧢 ' + (cheio ? "Teto de hoje batido! Agora é só XP 💪" : "Hoje: " + n(usado) + "/" + n(t.max) + " pts") + '</span>' +
+      '<span class="tb"><i style="width:' + Math.round(usado/t.max*100) + '%"></i></span>';
   }
 
   function quando(iso){
@@ -687,8 +728,9 @@
     }).join("");
     box.querySelectorAll("button").forEach(function(bt){
       bt.addEventListener("click", function(){
-        var sim = bt.dataset.a === "1", rc = bt.getBoundingClientRect();
-        call("decidir", [pin, bt.dataset.id, sim], function(e){ receber(e, sim ? "Aprovado ✅" : "Recusado", sim ? null : "gold",
+        var sim = bt.dataset.a === "1", rc = bt.getBoundingClientRect(), motivo = "";
+        if(!sim){ motivo = prompt("Por que recusou? (o João vai ver no histórico)", ""); if(motivo === null) return; }
+        call("decidir", [pin, bt.dataset.id, sim, motivo], function(e){ receber(e, sim ? "Aprovado ✅" : "Recusado", sim ? null : "gold",
           sim ? function(){ estoura(rc, 30); } : null); });
       });
     });
@@ -702,14 +744,18 @@
     if(st === "feito") btn = '<button class="act fin" disabled>✅ Feito</button>';
     var ped = st === "pendente" ? pedidoDe(m.chave) : null;
     if(st === "feito") {}
-    else if(st === "pendente") btn = '<button class="act wait soJoao" disabled>⏳ Enviado</button><button class="act get soPai">Aprovar</button>';
+    else if(st === "pendente"){
+      var zap = zapLink("Fiz! " + m.emoji + " " + m.nome + " (+" + m.pts + ")" + (m.prova ? " — " + m.prova : "") + ". Segue a prova 👇");
+      btn = '<a class="act zap soJoao" href="' + esc(zap) + '" target="_blank" rel="noopener">📸 Mandar prova</a><button class="act get soPai">Aprovar</button>';
+    }
     else btn = '<button class="act go soJoao">Fiz!</button><button class="act go soPai">Marcar</button>';
+    var soXp = !m.semanal && st !== "feito" && tetoBatido();
     el.innerHTML = '<span class="emoji">' + esc(m.emoji) + '</span><div class="txt"><div class="name">' + esc(m.nome) + '</div>' +
-      '<div class="val"><b>+' + n(m.pts) + '</b>' + (ped ? ' · <span class="quando">⏳ enviado ' + quando(ped.quando) + '</span>' : (m.prova ? ' · ' + esc(m.prova) : '')) + '</div></div>' + btn;
+      '<div class="val"><b>+' + n(m.pts) + '</b>' + (soXp ? ' <span class="xp">(hoje só XP)</span>' : '') + (ped ? ' · <span class="quando">⏳ enviado ' + quando(ped.quando) + '</span>' : (m.prova ? ' · ' + esc(m.prova) : '')) + '</div></div>' + btn;
     var go = el.querySelector(".act.go.soJoao");
     if(go) go.addEventListener("click", function(){
       var rc = go.getBoundingClientRect();
-      call("pedirMissao", [m.chave], function(e){ receber(e, "Enviado! Manda a prova pro pai 📸", "gold",
+      call("pedirMissao", [m.chave], function(e){ receber(e, "Enviado! Agora toca em 📸 pra mandar a prova", "gold",
         function(){ flutua(rc, "⏳ +" + n(m.pts), "#f5c542"); estoura(rc, 14, OUROS); }); });
     });
     var pai = el.querySelector(".act.soPai");
@@ -773,7 +819,8 @@
       if(x.b) lado += ' <span class="' + (x.s === "Recusado" ? "r" : "b") + '">' + (x.b > 0 ? "+" : "−") + brl(Math.abs(x.b)) + ' 🚲</span>';
       if(x.s === "Pendente") lado += ' <span class="y">⏳</span>';
       if(x.s === "Recusado") lado += ' <span style="color:var(--red)">✕</span>';
-      return '<div class="row"><b>' + esc(x.t) + '</b><span style="white-space:nowrap">' + lado + '</span></div>';
+      var obs = (x.s === "Recusado" && x.o) ? '<small class="obs">✕ ' + esc(x.o) + '</small>' : '';
+      return '<div class="row"><b>' + esc(x.t) + obs + '</b><span style="white-space:nowrap">' + lado + '</span></div>';
     }).join("");
   }
 
@@ -878,7 +925,7 @@
   });
   $("undobtn").addEventListener("click", function(){
     if(!E || !E.hist.length) return;
-    if(!confirm("Apagar \"" + E.hist[0].t + "\"?")) return;
+    if(!confirm("Apagar \"" + (E.ultimo || E.hist[0].t) + "\"?")) return;
     call("desfazerUltimo", [pin], function(e){ receber(e, "Desfeito ↩", "gold"); });
   });
   $("resetbtn").addEventListener("click", function(){
@@ -911,7 +958,7 @@
   // ---------- tutorial ----------
   var SLIDES = [
     {i:"🎮", t:"Bem-vindo, João", p:"Aqui tudo que você faz <b>vira ponto</b>. Ponto vira <b>prêmio</b>, <b>V-Bucks</b> ou <b>grana pra bike</b>."},
-    {i:"📸", t:"Fez? Toca em Fiz!", p:"Depois manda a <b>prova pro pai no zap</b> (foto ou print). Ele aprova e os pontos caem na hora."},
+    {i:"📸", t:"Fez? Toca em Fiz!", p:"Depois toca em <b>📸 Mandar prova</b>: abre o zap do pai com a mensagem pronta, aí é só anexar a foto ou print. Ele aprova e os pontos caem na hora."},
     {i:"🔥", t:"Ofensiva e combo", p:"Faz <b>pelo menos 1 missão por dia</b> pra não quebrar a ofensiva. Fez <b>3 no mesmo dia</b>? Ganha o <b>combo: +100 de bônus</b>."},
     {i:"🚲", t:"Gasta ou guarda?", p:"1.000 pontos = <b>R$ 10 em prêmio</b>… ou <b>R$ 20 na bike</b>, porque o pai dobra. Você escolhe."},
     {i:"📲", t:"Deixa com cara de app", p:"No <b>Safari</b>:", ol:["Toca em <b>Compartilhar</b> (quadrado com a seta pra cima)","Rola a lista <b>pra baixo</b>","Toca em <b>Adicionar à Tela de Início</b>"]}
