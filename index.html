@@ -108,6 +108,21 @@
   .bikemed .md{font-size:1.25rem;letter-spacing:-2px;white-space:nowrap;overflow:hidden;max-width:46%;}
   .bikemed .mt{flex:1;font-size:.78rem;font-weight:800;color:var(--muted);line-height:1.3;}
   .bikemed .mt b{color:var(--text);}
+  .ultra{margin-top:12px;border-radius:18px;padding:14px 16px;position:relative;overflow:hidden;
+    background:linear-gradient(125deg,#ff8a3d26,#f5c5421f 45%,#6ba8f01f);border:1.5px solid #ff8a3d;}
+  .ultra::before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent 0 70%,#ffffff14 80%,transparent 90%);
+    animation:spin 6s linear infinite;pointer-events:none;}
+  .ultra > *{position:relative;}
+  .ultra .uh{display:flex;align-items:center;gap:10px;}
+  .ultra .ui{font-size:1.9rem;line-height:1;animation:bob 2.2s ease-in-out infinite;display:inline-block;}
+  .ultra .ut{font-family:'Fredoka';font-weight:700;font-size:1.12rem;color:var(--orange);letter-spacing:.02em;}
+  .ultra .ux{margin-left:auto;font-family:'Fredoka';font-weight:700;font-size:1.25rem;color:#221a06;background:var(--gold);
+    border-radius:10px;padding:2px 9px;box-shadow:0 3px 0 #b8912a;}
+  .ultra p{margin:8px 0 10px;font-size:.84rem;font-weight:700;color:var(--muted);}
+  .ultra p b{color:var(--text);}
+  .ultra .ub{display:flex;align-items:center;justify-content:center;width:100%;border:0;border-radius:12px;padding:11px;font-weight:900;font-size:.88rem;
+    text-decoration:none;cursor:pointer;background:var(--orange);color:#2a1204;box-shadow:0 3px 0 #b85a1f;}
+  .ultra .ub:active{box-shadow:none;transform:translateY(3px) scale(.97);}
   .bikequote{margin-top:8px;font-size:.74rem;font-weight:700;color:var(--muted);font-style:italic;}
   .bikerule{font-size:.78rem;font-weight:700;color:var(--muted);margin-top:8px;}
   .bikerule b{color:var(--blue);}
@@ -356,6 +371,14 @@
       <button class="bk-sec soPai" id="bikeadd">💰 Dinheiro</button>
       <button class="bk-sec soPai" id="bikeout" style="flex:0 0 52px">↩</button>
     </div>
+  </div>
+
+  <div class="ultra">
+    <div class="uh"><span class="ui">💪</span><span class="ut">SUPER ULTRA BÔNUS</span><span class="ux">x2</span></div>
+    <p class="soJoao">Trabalhou de verdade e ganhou dinheiro (bico, roça, ajudou alguém)? <b>O que você ganhar, o pai coloca o mesmo tanto na bike!</b></p>
+    <p class="soPai">Ele ganhou dinheiro trabalhando? Lança aqui: <b>você coloca o mesmo valor na bike</b> (e se ele guardar o dele, entra em dobro).</p>
+    <a class="ub soJoao" id="ultrazap" href="#" target="_blank" rel="noopener">📲 Avisar o pai que trabalhei</a>
+    <button class="ub soPai" id="ultrabtn">💪 Lançar trabalho do João</button>
   </div>
 
   <div class="pedidos" id="pedidos"></div>
@@ -845,6 +868,7 @@
       lv: nivel(E.xp),
       bike: Math.floor(Math.min(100, E.bike / E.regras.bikeMeta * 100) / 25),
       med: Math.floor(Math.max(0, E.bike) / 100),
+      ultra: (function(){ var u = (E.hist || []).filter(function(x){ return /SUPER ULTRA/.test(x.t); })[0]; return u ? u.t + "|" + u.b : ""; })(),
       combo: !!(E.combo && E.combo.feito),
       badges: listaConquistas().filter(function(b){ return b.v >= b.m; }).map(function(b){ return b.n; })
     };
@@ -853,6 +877,10 @@
       var icones = {}; listaConquistas().forEach(function(b){ icones[b.n] = b.i; });
       agora.badges.forEach(function(b){ if(antes.badges.indexOf(b) < 0) fila.push({s:"CONQUISTA DESBLOQUEADA", big:icones[b], sub:b, som:"badge", emo:true}); });
       if(agora.combo && !antes.combo) fila.push({s:"COMBO DO DIA!", big:"🔥", emo:true, sub:"+" + n(E.combo.pts) + " pontos de bônus", som:"level", cores:["#ff8a3d","#f5c542","#f1ecdf","#ff5e3a"]});
+      if(agora.ultra && agora.ultra !== antes.ultra){
+        var ub = Number(agora.ultra.split("|")[1]) || 0;
+        fila.unshift({s:"💪 SUPER ULTRA BÔNUS", big:"x2", sub:"Ralou e o pai dobrou! +" + brl(ub) + " na bike 🚲", som:"level", cores:["#ff8a3d","#f5c542","#6ba8f0","#f1ecdf"]});
+      }
       if(agora.med > antes.med && !(agora.bike > antes.bike)) fila.push({s:"MEDALHA DA BIKE", big:"🏅", emo:true, som:"badge", cores:AZUIS,
         sub:brl(agora.med * 100) + " guardados! Próxima: " + brl((agora.med + 1) * 100)});
       if(agora.bike > antes.bike) fila.push({s:"COFRINHO DA BIKE", big:"🚲", emo:true, som:"bike", cores:AZUIS,
@@ -928,6 +956,22 @@
     call("guardarBike", [pin, v * sinal, o], function(e){ receber(e, (sinal > 0 ? "💰 +" : "↩ −") + brl(v) + " na bike", "blue"); });
   }
   $("bikeadd").addEventListener("click", function(){ lancarBike(1); });
+
+  // ---------- 💪 SUPER ULTRA BÔNUS: trabalhou, o pai paga o mesmo tanto ----------
+  $("ultrazap").href = zapLink("Pai, trabalhei hoje! 💪 Fiz: ___ e ganhei R$ ___. Bora o SUPER ULTRA BÔNUS? 🚲");
+  $("ultrabtn").addEventListener("click", function(){
+    var v = prompt("Quanto o João ganhou trabalhando? (R$)");
+    if(!v) return;
+    v = Number(String(v).replace(/[^\d,.]/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",", ".")) || 0;
+    if(v <= 0){ toast("Valor inválido", "bad"); return; }
+    var oq = prompt("O que ele fez? (roça, bico, ajudou o vizinho...)", "");
+    if(oq === null) return;
+    var junta = confirm("O João vai guardar os " + brl(v) + " dele na bike também?\n\nOK = entra " + brl(v*2) + " (dele + seu)\nCancelar = entra só " + brl(v) + " (a sua parte)");
+    var total = junta ? v*2 : v;
+    var desc = "SUPER ULTRA BÔNUS 💪 " + (oq.trim() || "trabalhou") + " (" + (junta ? brl(v) + " dele + " + brl(v) + " do pai" : brl(v) + " do pai") + ")";
+    var rc = this.getBoundingClientRect();
+    call("guardarBike", [pin, total, desc], function(e){ receber(e, null, null, function(){ estoura(rc, 50, OUROS); }); });
+  });
   $("bikeout").addEventListener("click", function(){ lancarBike(-1); });
 
   // ---------- ferramentas do pai ----------
