@@ -1,5 +1,5 @@
 // =====================================================
-//  MISSÕES DO JOÃO — servidor (Google Apps Script) v11
+//  MISSÕES DO JOÃO — servidor (Google Apps Script) v12
 //  A TELA do app agora fica no GitHub:
 //    https://thiagogaldinozicao-source.github.io/missoes-do-joao/
 //  Este código é só a "ponte" entre o app e a planilha.
@@ -49,6 +49,31 @@ const OFERTA_MIN = 800, OFERTA_MAX = 8000; // só prêmios nessa faixa de pontos
 
 // 📬 RESUMO SEMANAL: te manda um e-mail todo domingo às 20h
 const RESUMO_DOMINGO = true;
+
+// 🏆 CONQUISTAS: cada uma dá pontos UMA VEZ SÓ (o app confere sozinho se ele cumpriu).
+// Todas juntas somam 5.350 pts (≈ R$ 53 no total, espalhado em meses). Pode mudar os pontos aqui.
+// [id, emoji, nome, meta, pontos]
+const CONQUISTAS = [
+  ['m1',       '🎯', 'Primeira missão',         1,    50],
+  ['fogo3',    '🔥', '3 dias seguidos',         3,   100],
+  ['fogo7',    '🔥', 'Semana de fogo',          7,   250],
+  ['fogo30',   '☄️', 'Mês lendário',           30,  1000],
+  ['nv5',      '⭐', 'Nível 5',                 5,   150],
+  ['nv10',     '👑', 'Nível 10',               10,   500],
+  ['duo20',    '🦉', 'Poliglota',              20,   200],
+  ['tela10',   '📱', 'Dono do tempo',          10,   200],
+  ['vo15',     '👵', 'Neto de ouro',           15,   250],
+  ['faxina20', '🧽', 'Faxina braba',           20,   250],
+  ['nota1',    '💯', 'Cabeção',                 1,   150],
+  ['premio1',  '🎁', 'Primeiro prêmio',         1,    50],
+  ['bike1',    '🚲', 'Primeira grana na bike',  1,    50],
+  ['bike500',  '🏅', 'R$ 500 na bike',        500,   200],
+  ['bike1000', '🥇', 'R$ 1.000 na bike',     1000,   300],
+  ['bikemeia', '🛞', 'Meia bike',               0,   500], // meta = metade de BIKE_META
+  ['m100',     '🏆', '100 missões',           100,   500],
+  ['passe10',  '🎟️', 'Passe nível 10',         10,   150],
+  ['passe30',  '🏆', 'Passe completo',         30,   500]
+];
 
 // 🌐 Endereço do app (GitHub Pages)
 const SITE_URL = 'https://thiagogaldinozicao-source.github.io/missoes-do-joao/';
@@ -119,7 +144,8 @@ const API = {
   pedirMissao: pedirMissao, pedirPremio: pedirPremio, pedirBike: pedirBike, abrirBau: abrirBau,
   marcarMissao: marcarMissao, resgatarPremio: resgatarPremio, trocarBike: trocarBike,
   guardarBike: guardarBike, ajustarPontos: ajustarPontos, decidir: decidir,
-  desfazerUltimo: desfazerUltimo, zerar: zerar, resgatarPasse: resgatarPasse
+  desfazerUltimo: desfazerUltimo, zerar: zerar, resgatarPasse: resgatarPasse,
+  resgatarConquista: resgatarConquista
 };
 
 function responder_(obj) {
@@ -306,7 +332,7 @@ function getEstado() {
   let comboFeitas = 0, comboFeito = false, bauHoje = 0;
   const diasBau = {}, ptsDia = {};
   let semPts = 0, semMissoes = 0, ultimo = '';
-  const mesAtual = mes_(new Date()), xpDia = {}, xpMes = {}, passeResg = [];
+  const mesAtual = mes_(new Date()), xpDia = {}, xpMes = {}, passeResg = [], conqResg = {};
 
   hist.forEach(function (h) {
     const aprovado = h.status === 'Aprovado';
@@ -329,6 +355,7 @@ function getEstado() {
         xpMes[dx.slice(0, 7)] = (xpMes[dx.slice(0, 7)] || 0) + h.pts;
       }
       if (h.chave.indexOf('passe:' + mesAtual + ':') === 0) passeResg.push(Number(h.chave.split(':')[2]));
+      if (h.chave.indexOf('conq:') === 0) conqResg[h.chave.slice(5)] = true;
       if (semana_(h.data) === semana) {
         if (ganho > 0) semPts += ganho;
         if (ehMissao) semMissoes++;
@@ -387,6 +414,27 @@ function getEstado() {
     resgatados: passeResg, fim: fimDoMes_(mesAtual).toISOString()
   };
 
+  // conquistas: o servidor confere tudo (o celular não tem como fingir)
+  const conta = function (pedaco) {
+    let t = 0;
+    Object.keys(porChave).forEach(function (k) { if (k.toLowerCase().indexOf(pedaco) >= 0) t += porChave[k]; });
+    return t;
+  };
+  let nivelXp = 1; while (xp >= 125 * nivelXp * (nivelXp + 1)) nivelXp++;
+  const valor = {
+    m1: missoes, fogo3: maior, fogo7: maior, fogo30: maior, nv5: nivelXp, nv10: nivelXp,
+    duo20: conta('duolingo'), tela10: conta('tela'), vo15: conta('vó'),
+    faxina20: conta('louça') + conta('banheiro') + conta('casa') + conta('quarto'),
+    nota1: conta('nota boa'), premio1: premios, bike1: bike > 0 ? 1 : 0,
+    bike500: Math.floor(bike), bike1000: Math.floor(bike), bikemeia: Math.floor(bike),
+    m100: missoes, passe10: maxNivel, passe30: maxNivel
+  };
+  const conquistas = CONQUISTAS.map(function (c) {
+    const meta = c[0] === 'bikemeia' ? BIKE_META / 2 : c[3], v = valor[c[0]] || 0;
+    return { id: c[0], i: c[1], n: c[2], m: meta, v: v, pts: c[4], ok: v >= meta, pego: !!conqResg[c[0]],
+             dinheiro: c[0].indexOf('bike') === 0 && c[0] !== 'bike1' };
+  });
+
   const ultimos = hist.slice(-12).reverse().map(function (h) {
     return { t: h.desc, v: h.pts, b: h.bike, s: h.status, tipo: h.tipo, o: h.obs };
   });
@@ -399,7 +447,7 @@ function getEstado() {
     teto: { usado: ptsDia[hoje] || 0, max: TETO_DIA },
     semana: { pts: semPts, missoes: semMissoes },
     bauHoje: bauHoje, login: login,
-    diasPts: diasPts, passe: passe, versao: 11,
+    diasPts: diasPts, passe: passe, versao: 12, conquistas: conquistas,
     relampago: relampago_(cfg, hoje), oferta: oferta_(cfg, semana),
     stats: { missoes: missoes, premios: premios, trocasBike: trocasBike, porChave: porChave },
     cfg: cfg,
@@ -528,6 +576,18 @@ function resgatarPasse(nivel) {
     if (e.passe.resgatados.indexOf(n) >= 0) throw new Error('Esse já foi resgatado nessa temporada');
     novaLinha_('Bônus', '🎟️ Passe nível ' + n + ' (Temporada ' + e.passe.temporada + ')', bonus, '', 'Aprovado',
       'passe:' + e.passe.mes + ':' + n, 'João');
+    return getEstado();
+  });
+}
+
+// 🏆 João pega a recompensa de uma conquista (uma vez só)
+function resgatarConquista(id) {
+  return comLock_(function () {
+    const e = getEstado(), c = e.conquistas.filter(function (x) { return x.id === id; })[0];
+    if (!c) throw new Error('Conquista não encontrada. Atualiza o app.');
+    if (!c.ok) throw new Error('Ainda não desbloqueou essa conquista');
+    if (c.pego) throw new Error('Você já pegou essa recompensa');
+    novaLinha_('Bônus', '🏆 Conquista: ' + c.n, c.pts, '', 'Aprovado', 'conq:' + c.id, 'João');
     return getEstado();
   });
 }

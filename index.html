@@ -195,6 +195,16 @@
   .badge.got .p{color:var(--gold);}
   .bprog{height:4px;border-radius:3px;background:var(--bg);margin:6px 6px 0;overflow:hidden;}
   .bprog i{display:block;height:100%;background:var(--muted);}
+  .badge{position:relative;}
+  .badge .rw{display:inline-block;margin-top:6px;font-size:.68rem;font-weight:900;color:var(--muted);background:var(--bg);border-radius:7px;padding:2px 7px;}
+  .badge.got .rw{color:var(--green);}
+  .badge .pegar{display:block;width:100%;margin-top:8px;border:0;border-radius:10px;padding:8px 4px;background:var(--green);color:#0c2414;
+    font-weight:900;font-size:.76rem;cursor:pointer;box-shadow:0 3px 0 #3c8a54;}
+  .badge .pegar:active{box-shadow:none;transform:translateY(3px) scale(.96);}
+  .badge.claim{border-color:var(--green);animation:claim 1.1s ease-in-out infinite;}
+  .tabdot{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;margin-left:4px;border-radius:9px;
+    background:var(--red);color:#fff;font-size:.62rem;font-weight:900;vertical-align:1px;animation:pulsedot 1.4s ease-in-out infinite;}
+  @keyframes pulsedot{50%{transform:scale(1.18);}}
   .count{font-family:'Fredoka';font-weight:600;color:var(--gold);}
 
   /* MSG / TIPS */
@@ -778,6 +788,7 @@
     return t;
   }
   function listaConquistas(){
+    if(E.conquistas) return E.conquistas;
     var s = E.stats, lv = nivel(E.xp), meta = E.regras.bikeMeta;
     var faxina = conta("louça") + conta("banheiro") + conta("casa") + conta("quarto");
     return [
@@ -843,7 +854,8 @@
   var AVATARES = [
     {id:"🙂"}, {id:"😎", req:{passe:1}}, {id:"🤠", req:{passe:4}}, {id:"🥷", req:{passe:9}}, {id:"🤖", req:{passe:14}},
     {id:"🐺", req:{passe:19}}, {id:"🐉", req:{passe:23}}, {id:"🦁", req:{passe:29}},
-    {id:"🦊", req:{rank:2}}, {id:"👽", req:{rank:4}}, {id:"👑", req:{rank:5}}
+    {id:"🦊", req:{rank:2}}, {id:"👽", req:{rank:4}}, {id:"👑", req:{rank:5}},
+    {id:"🔥", req:{conq:"fogo7"}}, {id:"🏆", req:{conq:"m100"}}
   ];
   var MOLDURAS = [
     {id:"", n:"Nenhuma", e:"⚪"}, {id:"m-dourada", n:"Dourada", e:"🟡", req:{passe:3}}, {id:"m-fogo", n:"Fogo", e:"🔥", req:{passe:11}},
@@ -853,7 +865,8 @@
     {id:"Novato da Roça"}, {id:"Caçador de Missões", req:{passe:2}}, {id:"Rei do Combo", req:{passe:7}},
     {id:"Dono do Baú", req:{passe:12}}, {id:"Mão na Massa", req:{passe:16}}, {id:"Lenda do Duolingo", req:{passe:22}},
     {id:"Imparável", req:{passe:27}}, {id:"Campeão da Temporada", req:{passe:30}},
-    {id:"Diamante Bruto", req:{rank:3}}, {id:"LENDA", req:{rank:5}}
+    {id:"Diamante Bruto", req:{rank:3}}, {id:"LENDA", req:{rank:5}},
+    {id:"Pegando Fogo", req:{conq:"fogo7"}}, {id:"Neto de Ouro", req:{conq:"vo15"}}, {id:"Máquina de Missões", req:{conq:"m100"}}
   ];
   var PACKS = [
     {id:"classico", n:"Clássico", e:"🔔"}, {id:"8bit", n:"8-bit", e:"👾", req:{passe:8}},
@@ -867,9 +880,13 @@
     if(!req) return true;
     if(req.passe) return maxPasse() >= req.passe;
     if(req.rank) return E ? rankDe(E.xp).tier >= req.rank : false;
+    if(req.conq) return !!(E && E.conquistas && E.conquistas.some(function(c){ return c.id === req.conq && c.pego; }));
     return false;
   }
-  function reqTxt(req){ return req.passe ? "Passe nv " + req.passe : "Rank " + TIERS[req.rank].n; }
+  function reqTxt(req){
+    if(req.conq){ var c = E && E.conquistas ? E.conquistas.filter(function(x){ return x.id === req.conq; })[0] : null; return "Conquista " + (c ? c.n : ""); }
+    return req.passe ? "Passe nv " + req.passe : "Rank " + TIERS[req.rank].n;
+  }
 
   // trilha do passe: o que cada nível dá
   function trilha(){
@@ -1206,15 +1223,43 @@
     });
   }
 
+  function premiosConquista(c){
+    var extra = TITULOS.concat(AVATARES).filter(function(x){ return x.req && x.req.conq === c.id; }).map(function(x){ return x.id; });
+    return extra;
+  }
   function renderConquistas(){
     var L = listaConquistas(), got = 0;
     $("badges").innerHTML = L.map(function(b){
       var ok = b.v >= b.m; if(ok) got++;
       var prog = b.dinheiro ? brl(Math.min(b.v,b.m)) + " / " + brl(b.m) : Math.min(b.v, b.m) + " / " + b.m;
-      return '<div class="badge ' + (ok ? "got" : "lock") + '"><div class="i">' + b.i + '</div><div class="n">' + b.n + '</div>' +
-        (ok ? '<div class="p">Desbloqueada</div>' : '<div class="bprog"><i style="width:' + Math.round(Math.min(b.v,b.m)/b.m*100) + '%"></i></div><div class="p">' + prog + '</div>') + '</div>';
+      var podePegar = ok && b.pts && b.pego === false, extra = b.id ? premiosConquista(b) : [];
+      var rw = b.pts ? '<div class="rw">' + (b.pego ? "✅ " : ok ? "" : "🔒 ") + "+" + n(b.pts) + " pts" + (extra.length ? " + " + extra.join(" ") : "") + '</div>' : '';
+      return '<div class="badge ' + (ok ? "got" : "lock") + (podePegar ? " claim" : "") + '"><div class="i">' + b.i + '</div><div class="n">' + esc(b.n) + '</div>' +
+        (ok ? (podePegar ? '' : '<div class="p">Desbloqueada</div>') : '<div class="bprog"><i style="width:' + Math.round(Math.min(b.v,b.m)/b.m*100) + '%"></i></div><div class="p">' + prog + '</div>') +
+        rw + (podePegar ? '<button class="pegar" data-id="' + esc(b.id) + '">🎁 Pegar +' + n(b.pts) + '</button>' : '') + '</div>';
     }).join("");
     $("bcount").textContent = got + "/" + L.length;
+    $("badges").querySelectorAll(".pegar").forEach(function(bt){
+      bt.addEventListener("click", function(){
+        var c = L.filter(function(x){ return x.id === bt.dataset.id; })[0], rc = bt.getBoundingClientRect(), extra = premiosConquista(c);
+        call("resgatarConquista", [c.id], function(e){
+          receber(e, null, null, function(){ estoura(rc, 40, OUROS); flutua(rc, "+" + n(c.pts)); });
+          fila.unshift({s:"🏆 RECOMPENSA DA CONQUISTA", big:c.i, emo:true, sub:c.n + ": +" + n(c.pts) + " pontos" + (extra.length ? " + " + extra.join(", ") + " no Armário" : ""), som:"coin", cores:OUROS});
+          if(!tocando){ tocando = true; setTimeout(proximo, 500); }
+        });
+      });
+    });
+    // bolinha vermelha nas abas quando tem coisa pra pegar
+    var nConq = L.filter(function(c){ return c.pts && c.pego === false && c.v >= c.m; }).length;
+    var nPasse = 0;
+    if(E.passe){ var bon = E.passe.bonus || {}; Object.keys(bon).forEach(function(k){ if(+k <= E.passe.nivel && E.passe.resgatados.indexOf(+k) < 0) nPasse++; }); }
+    marcaAba("perfil", nConq); marcaAba("passe", nPasse);
+  }
+  function marcaAba(id, qtd){
+    var bt = document.querySelector('nav.tabs button[data-tab="' + id + '"]'); if(!bt) return;
+    var d = bt.querySelector(".tabdot");
+    if(qtd > 0){ if(!d){ d = document.createElement("span"); d.className = "tabdot"; bt.appendChild(d); } d.textContent = qtd; }
+    else if(d) d.remove();
   }
 
   function renderHist(){
@@ -1405,7 +1450,7 @@
     {i:"🎮", t:"Bem-vindo, João", p:"Aqui tudo que você faz <b>vira ponto</b>. Ponto vira <b>prêmio</b>, <b>V-Bucks</b> ou <b>grana pra bike</b>."},
     {i:"📸", t:"Fez? Toca em Fiz!", p:"Depois toca em <b>📸 Mandar prova</b>: abre o zap do pai com a mensagem pronta, aí é só anexar a foto ou print. Ele aprova e os pontos caem na hora."},
     {i:"🔥", t:"Ofensiva e combo", p:"Faz <b>pelo menos 1 missão por dia</b> pra não quebrar a ofensiva. Fez <b>3 no mesmo dia</b>? Ganha o <b>combo: +100 de bônus</b>."},
-    {i:"🎟️", t:"Passe de Temporada", p:"Todo mês tem um passe com <b>30 níveis</b>. Missão dá XP, XP sobe o passe e libera <b>skins, títulos, molduras, sons</b> e até <b>pontos</b>. E tem <b>rank</b>: Bronze → Lenda!"},
+    {i:"🎟️", t:"Passe de Temporada", p:"Todo mês tem um passe com <b>30 níveis</b>. Missão dá XP, XP sobe o passe e libera <b>skins, títulos, molduras, sons</b> e até <b>pontos</b>. E tem <b>rank</b>: Bronze → Lenda! Conquista desbloqueada? Vai no <b>Perfil</b> e toca em <b>Pegar</b>."},
     {i:"⚡", t:"Relâmpago e oferta", p:"Todo dia uma missão sorteada vale <b>o dobro</b>. E toda semana um prêmio fica <b>mais barato</b> na loja. Fica de olho!"},
     {i:"🚲", t:"Gasta ou guarda?", p:"1.000 pontos = <b>R$ 10 em prêmio</b>… ou <b>R$ 20 na bike</b>, porque o pai dobra. Você escolhe."},
     {i:"📲", t:"Deixa com cara de app", p:"No <b>Safari</b>:", ol:["Toca em <b>Compartilhar</b> (quadrado com a seta pra cima)","Rola a lista <b>pra baixo</b>","Toca em <b>Adicionar à Tela de Início</b>"]}
