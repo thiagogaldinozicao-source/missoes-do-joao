@@ -198,6 +198,14 @@
   .badge{position:relative;}
   .badge .rw{display:inline-block;margin-top:6px;font-size:.68rem;font-weight:900;color:var(--muted);background:var(--bg);border-radius:7px;padding:2px 7px;}
   .badge.got .rw{color:var(--green);}
+  .badge .rar{display:block;font-size:.58rem;font-weight:900;letter-spacing:.06em;margin-bottom:4px;}
+  .badge.r-comum{--rc:#9aa3b5;} .badge.r-rara{--rc:#4da3ff;} .badge.r-epica{--rc:#b56bff;} .badge.r-lendaria{--rc:#ffc93d;}
+  .badge[class*="r-"]{border-color:color-mix(in srgb,var(--rc) 45%,var(--line));}
+  .badge[class*="r-"] .rar{color:var(--rc);}
+  .badge.got[class*="r-"]{border-color:var(--rc);background:linear-gradient(170deg,color-mix(in srgb,var(--rc) 22%,transparent),var(--surface) 70%);
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--rc) 35%,transparent),0 8px 20px color-mix(in srgb,var(--rc) 14%,transparent);}
+  .badge.got.r-lendaria{animation:lendaria 2.4s ease-in-out infinite;}
+  @keyframes lendaria{50%{box-shadow:0 0 0 1px #ffc93d88,0 0 22px #ffc93d55;}}
   .badge .pegar{display:block;width:100%;margin-top:8px;border:0;border-radius:10px;padding:8px 4px;background:var(--green);color:#0c2414;
     font-weight:900;font-size:.76rem;cursor:pointer;box-shadow:0 3px 0 #3c8a54;}
   .badge .pegar:active{box-shadow:none;transform:translateY(3px) scale(.96);}
@@ -1233,8 +1241,10 @@
       var ok = b.v >= b.m; if(ok) got++;
       var prog = b.dinheiro ? brl(Math.min(b.v,b.m)) + " / " + brl(b.m) : Math.min(b.v, b.m) + " / " + b.m;
       var podePegar = ok && b.pts && b.pego === false, extra = b.id ? premiosConquista(b) : [];
+      var rar = !b.pts ? null : b.pts >= 1000 ? ["lendaria","Lendária"] : b.pts >= 300 ? ["epica","Épica"] : b.pts >= 200 ? ["rara","Rara"] : ["comum","Comum"];
       var rw = b.pts ? '<div class="rw">' + (b.pego ? "✅ " : ok ? "" : "🔒 ") + "+" + n(b.pts) + " pts" + (extra.length ? " + " + extra.join(" ") : "") + '</div>' : '';
-      return '<div class="badge ' + (ok ? "got" : "lock") + (podePegar ? " claim" : "") + '"><div class="i">' + b.i + '</div><div class="n">' + esc(b.n) + '</div>' +
+      return '<div class="badge ' + (ok ? "got" : "lock") + (podePegar ? " claim" : "") + (rar ? " r-" + rar[0] : "") + '">' + (rar ? '<span class="rar">' + rar[1] + '</span>' : '') +
+        '<div class="i">' + b.i + '</div><div class="n">' + esc(b.n) + '</div>' +
         (ok ? (podePegar ? '' : '<div class="p">Desbloqueada</div>') : '<div class="bprog"><i style="width:' + Math.round(Math.min(b.v,b.m)/b.m*100) + '%"></i></div><div class="p">' + prog + '</div>') +
         rw + (podePegar ? '<button class="pegar" data-id="' + esc(b.id) + '">🎁 Pegar +' + n(b.pts) + '</button>' : '') + '</div>';
     }).join("");
