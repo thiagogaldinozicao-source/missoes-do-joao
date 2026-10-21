@@ -326,6 +326,116 @@
     -webkit-mask:radial-gradient(circle,#000 20%,transparent 70%);mask:radial-gradient(circle,#000 20%,transparent 70%);}
   @keyframes spin{to{transform:rotate(360deg);}}
 
+  /* ===== v11: PERFIL / TEMAS / RANK / PASSE / ARMÁRIO ===== */
+  body[data-tema="noite"]{--bg:#0d1220;--bg2:#131a2d;--surface:#1a2340;--surface2:#232f52;--line:#2e3d63;--gold:#8fd3ff;--gold-soft:#8fd3ff22;}
+  body[data-tema="floresta"]{--bg:#0f1a14;--bg2:#13221a;--surface:#1a2e22;--surface2:#223a2b;--line:#2c4a37;--gold:#b7e35b;--gold-soft:#b7e35b22;}
+  body[data-tema="lava"]{--bg:#1a0e0c;--bg2:#241210;--surface:#331a16;--surface2:#40211b;--line:#552c24;--gold:#ffb347;--gold-soft:#ffb34722;}
+  body[data-tema="neon"]{--bg:#0b0b1a;--bg2:#120f26;--surface:#1b1638;--surface2:#251e4a;--line:#352a66;--gold:#ff6ad5;--gold-soft:#ff6ad522;}
+  body[data-tema="gelo"]{--bg:#0e1a22;--bg2:#12222c;--surface:#18303c;--surface2:#1f3b4a;--line:#2a4f61;--gold:#bdf3ff;--gold-soft:#bdf3ff22;}
+  body[data-tema="ouro"]{--bg:#16120a;--bg2:#1f190c;--surface:#2b2210;--surface2:#372b13;--line:#4d3d1a;--gold:#ffd84a;--gold-soft:#ffd84a22;}
+
+  .perfil{display:flex;align-items:center;gap:12px;min-width:0;}
+  .ava{width:52px;height:52px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.75rem;
+    background:var(--surface);border:2.5px solid var(--line);position:relative;isolation:isolate;}
+  .ava.m-dourada{border-color:#f5c542;box-shadow:0 0 0 3px #f5c54233;}
+  .ava.m-fogo{border-color:#ff8a3d;animation:fogo 1.3s ease-in-out infinite alternate;}
+  @keyframes fogo{from{box-shadow:0 0 6px #ff8a3d88,0 -2px 10px #ff5e3a55;}to{box-shadow:0 0 16px #ff8a3dcc,0 -6px 18px #ff5e3a99;}}
+  .ava.m-neon{border-color:#5ff2ff;animation:neon 1.8s ease-in-out infinite;}
+  @keyframes neon{0%,100%{box-shadow:0 0 10px #5ff2ffaa,inset 0 0 6px #ff6ad588;}50%{box-shadow:0 0 18px #ff6ad5cc,inset 0 0 8px #5ff2ff88;border-color:#ff6ad5;}}
+  .ava.m-arco{border-color:transparent;}
+  .ava.m-arco::before{content:"";position:absolute;inset:-5px;border-radius:50%;z-index:-1;
+    background:conic-gradient(#ff5e5e,#ffb347,#ffe14a,#5ee38c,#5ff2ff,#7a8cff,#ff6ad5,#ff5e5e);animation:spin 3s linear infinite;}
+  .ava.m-arco::after{content:"";position:absolute;inset:-1px;border-radius:50%;z-index:-1;background:var(--surface);}
+  .titulo{font-size:.76rem;font-weight:900;color:var(--gold);margin-top:2px;letter-spacing:.01em;}
+  .rk{display:inline-flex;align-items:center;gap:6px;vertical-align:middle;}
+  .rk svg{flex-shrink:0;}
+
+  /* passe */
+  .aviso11{background:var(--surface);border:1px dashed var(--gold);border-radius:14px;padding:14px;font-size:.86rem;font-weight:700;color:var(--muted);margin-bottom:12px;}
+  .aviso11 b{color:var(--gold);}
+  .pcard{border-radius:20px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;
+    background:linear-gradient(140deg,#3b2a70,var(--surface) 55%,#2a1f45);border:1.5px solid var(--gold);}
+  .pcard::after{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;
+    background:radial-gradient(circle,var(--gold-soft),transparent 70%);}
+  .pcard .ps{font-size:.72rem;font-weight:900;letter-spacing:.14em;color:var(--gold);}
+  .pcard .pt{font-family:'Fredoka';font-weight:700;font-size:1.45rem;line-height:1.15;margin:2px 0 10px;}
+  .pcard .prow{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;}
+  .pcard .pnv{font-family:'Fredoka';font-weight:700;font-size:2.6rem;line-height:1;color:var(--gold);}
+  .pcard .pnv small{font-size:1rem;color:var(--muted);}
+  .pcard .pfim{font-size:.76rem;font-weight:800;color:var(--muted);text-align:right;}
+  .pcard .pfim b{color:var(--text);}
+  .pcard .bar{margin-top:10px;}
+  .ptrack{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+  .ptile{position:relative;aspect-ratio:1/1.08;border-radius:13px;background:var(--surface);border:1.5px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;transition:transform .12s;}
+  .ptile:active{transform:scale(.93);}
+  .ptile .pn{position:absolute;top:3px;left:6px;font-size:.62rem;font-weight:900;color:var(--muted);}
+  .ptile .pi{font-size:1.35rem;line-height:1.1;}
+  .ptile .pl{font-size:.56rem;font-weight:800;color:var(--muted);text-align:center;line-height:1.1;margin-top:3px;max-height:2.3em;overflow:hidden;}
+  .ptile.lock .pi,.ptile.lock .pl{opacity:.35;filter:grayscale(1);}
+  .ptile.lock::after{content:"🔒";position:absolute;bottom:3px;right:4px;font-size:.6rem;opacity:.7;}
+  .ptile.got{border-color:var(--gold);background:linear-gradient(170deg,var(--gold-soft),var(--surface) 70%);}
+  .ptile.got .pn{color:var(--gold);}
+  .ptile.pts .pl{color:var(--green);}
+  .ptile.claim{border-color:var(--green);animation:claim 1.1s ease-in-out infinite;}
+  @keyframes claim{0%,100%{box-shadow:0 0 0 0 #5ec27a88;}50%{box-shadow:0 0 0 5px #5ec27a00,0 0 14px #5ec27a99;}}
+  .ptile.claim::after{content:"PEGAR";position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);background:var(--green);color:#0c2414;
+    font-size:.52rem;font-weight:900;border-radius:6px;padding:1px 5px;}
+  .ptile.prox{outline:2px dashed var(--gold);outline-offset:2px;}
+
+  /* perfil */
+  .card2{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;}
+  .card2 h3{margin:0 0 10px;font-family:'Fredoka';font-weight:600;font-size:1.05rem;}
+  .rankbig{display:flex;align-items:center;gap:16px;}
+  .rankbig .rn{font-family:'Fredoka';font-weight:700;font-size:1.6rem;line-height:1.1;}
+  .rankbig .rx{font-size:.8rem;font-weight:800;color:var(--muted);margin-top:2px;}
+  .rankbig .bar{margin-top:8px;}
+  .ladder{display:flex;justify-content:space-between;margin-top:14px;gap:4px;}
+  .ladder div{flex:1;text-align:center;font-size:.6rem;font-weight:900;color:var(--muted);}
+  .ladder div.on{color:var(--text);}
+  .ladder div.off svg{filter:grayscale(1);opacity:.35;}
+  .graf svg{width:100%;height:auto;display:block;}
+  .grafinfo{display:flex;justify-content:space-between;font-size:.78rem;font-weight:800;color:var(--muted);margin-top:6px;}
+  .grafinfo b{color:var(--text);}
+  .armh{font-size:.8rem;font-weight:900;color:var(--muted);margin:14px 2px 8px;}
+  .armh:first-of-type{margin-top:0;}
+  .chips2{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .chips2.lg{grid-template-columns:repeat(2,1fr);}
+  .ck{position:relative;border:1.5px solid var(--line);background:var(--surface2);border-radius:12px;padding:9px 4px;text-align:center;
+    font-weight:800;font-size:.72rem;line-height:1.2;color:var(--text);cursor:pointer;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+  .ck .ce{font-size:1.4rem;line-height:1;}
+  .ck .sw{width:26px;height:26px;border-radius:50%;border:2px solid #ffffff33;}
+  .ck.on{border-color:var(--gold);background:var(--gold-soft);box-shadow:0 0 0 2px var(--gold-soft);}
+  .ck.on::after{content:"✓";position:absolute;top:2px;right:5px;font-size:.7rem;color:var(--gold);font-weight:900;}
+  .ck.lk{opacity:.5;}
+  .ck.lk .ce,.ck.lk .sw{filter:grayscale(1);opacity:.5;}
+  .ck .lkt{font-size:.58rem;color:var(--muted);font-weight:800;}
+
+  /* relâmpago e oferta */
+  .raiobox{display:flex;align-items:center;gap:12px;border-radius:14px;padding:12px 14px;margin-bottom:12px;position:relative;overflow:hidden;
+    background:linear-gradient(120deg,#ffd84a2e,var(--surface) 65%);border:1.5px solid #ffd84a;}
+  .raiobox .ri{font-size:1.8rem;animation:raio 1.6s ease-in-out infinite;display:inline-block;}
+  @keyframes raio{0%,82%,100%{transform:none;filter:none;}86%{transform:scale(1.25) rotate(-8deg);filter:drop-shadow(0 0 8px #ffd84a);}92%{transform:scale(1.1) rotate(6deg);}}
+  .raiobox .rt{flex:1;font-weight:900;font-size:.88rem;line-height:1.3;}
+  .raiobox .rt small{display:block;font-weight:800;font-size:.74rem;color:var(--muted);}
+  .raiobox .rt small b{color:#ffd84a;}
+  .item.raio{border-color:#ffd84a;background:linear-gradient(120deg,#ffd84a1f,var(--surface) 60%);}
+  .tagx{display:inline-block;background:#ffd84a;color:#221a06;font-weight:900;font-size:.64rem;border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:1px;}
+  .tagx.of{background:var(--red);color:#fff;}
+  .oferta{border-radius:18px;padding:14px 16px;margin-bottom:14px;position:relative;overflow:hidden;
+    background:linear-gradient(125deg,#e5736b33,var(--surface) 60%);border:1.5px solid var(--red);}
+  .oferta .os{font-size:.7rem;font-weight:900;letter-spacing:.12em;color:var(--red);}
+  .oferta .orow{display:flex;align-items:center;gap:12px;margin-top:6px;}
+  .oferta .oe{font-size:2rem;}
+  .oferta .on2{flex:1;font-weight:900;font-size:.98rem;line-height:1.25;}
+  .oferta .op{font-size:.84rem;font-weight:800;color:var(--muted);margin-top:2px;}
+  .oferta .op s{opacity:.7;} .oferta .op b{color:var(--gold);font-size:1rem;}
+  .oferta .oc{font-size:.74rem;font-weight:900;color:var(--text);margin-top:8px;}
+  .oferta .oc span{color:var(--red);}
+  .oferta .obadge{position:absolute;top:10px;right:-28px;transform:rotate(35deg);background:var(--red);color:#fff;font-weight:900;font-size:.8rem;padding:3px 34px;}
+  .val s{color:var(--muted);font-weight:700;}
+
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
 </style>
 </head>
@@ -333,9 +443,13 @@
 <div class="wrap">
 
   <header>
-    <div>
-      <div class="kicker" id="kicker">🎮 painel do João</div>
-      <h1>Missões do <span>João</span></h1>
+    <div class="perfil">
+      <div class="ava" id="ava">🙂</div>
+      <div style="min-width:0">
+        <div class="kicker" id="kicker">🎮 painel do João</div>
+        <h1>Missões do <span>João</span></h1>
+        <div class="titulo" id="titulo">Novato da Roça</div>
+      </div>
     </div>
     <div class="streak" id="streak" title="Ofensiva: dias seguidos com missão"><span class="f">🔥</span><span id="streakn">0</span></div>
   </header>
@@ -386,16 +500,17 @@
 
   <nav class="tabs">
     <button class="on" data-tab="missoes">Missões</button>
+    <button data-tab="passe">🎟️ Passe</button>
     <button data-tab="premios">Prêmios</button>
-    <button data-tab="conquistas">Conquistas</button>
-    <button class="soPai" data-tab="msgs">Recados</button>
-    <button class="soPai" data-tab="dicas">Dicas</button>
+    <button data-tab="perfil">Perfil</button>
+    <button class="soPai" data-tab="pai">Pai</button>
   </nav>
 
   <section id="missoes" class="on">
     <div class="sec-h">Missões de hoje</div>
     <div class="sec-sub soJoao">Fez? Toca em <b>Fiz!</b>, depois em <b>📸 Mandar prova</b> que abre o zap do pai. Cada uma vale 1 vez por dia.</div>
     <div class="sec-sub soPai">Aprova quando ele mandar a prova. Cada uma vale 1 vez por dia.</div>
+    <div class="raiobox" id="raiobox" style="display:none"></div>
     <div class="combo" id="combo"></div>
     <div class="teto" id="teto"></div>
     <div id="daily"></div>
@@ -405,19 +520,27 @@
     <div class="hist" id="histbox"></div>
   </section>
 
+  <section id="passe">
+    <div id="passebox"></div>
+  </section>
+
   <section id="premios">
     <div class="sec-h">Prêmios 🎁</div>
     <div class="sec-sub" id="premsub"></div>
+    <div id="ofertabox"></div>
     <div id="rewards"></div>
   </section>
 
-  <section id="conquistas">
-    <div class="sec-h">Conquistas <span class="count" id="bcount"></span></div>
+  <section id="perfil">
+    <div class="card2"><h3>🛡️ Rank</h3><div id="rankbox"></div></div>
+    <div class="card2"><h3>📊 Sua semana</h3><div id="grafbox"></div></div>
+    <div class="card2"><h3>🎒 Armário</h3><div class="sec-sub" style="margin:-4px 0 10px">Escolhe teu visual. Libera mais coisa subindo no passe e no rank.</div><div id="armario"></div></div>
+    <div class="sec-h" style="margin-top:18px">Conquistas <span class="count" id="bcount"></span></div>
     <div class="sec-sub">Vai desbloqueando conforme manda bem. Algumas são difíceis de propósito 😏</div>
     <div class="badges" id="badges"></div>
   </section>
 
-  <section id="msgs" class="soPai">
+  <section id="pai" class="soPai">
     <div class="sec-h">Recado do dia 💬</div>
     <div class="sec-sub">Copia e manda pro João no zap.</div>
     <div class="msgcard">
@@ -425,10 +548,7 @@
       <div class="msgtext" id="msgtext"></div>
       <div class="msgbtns"><button class="btn-copy" id="copymsg">📋 Copiar</button><button class="btn-next" id="nextmsg">Próxima ↻</button></div>
     </div>
-  </section>
-
-  <section id="dicas" class="soPai">
-    <div class="sec-h">Manual do pai de aborrecente 😅</div>
+    <div class="sec-h" style="margin-top:22px">Manual do pai de aborrecente 😅</div>
     <div class="tip good"><h3>Conexão vem antes de cobrança</h3><p>Se ele sentir que você fala com ele porque se importa (não só pra cobrar nota), ele baixa a guarda e começa a ouvir.</p></div>
     <div class="tip"><h3>O jogo não é o inimigo</h3><p>Aí na roça, o jogo é a diversão e a turma dele. Pergunta o que ele joga, se interessa. Vira ponte, não treta.</p></div>
     <div class="tip warn"><h3>Equilíbrio, não proibição</h3><p>Combina com ele um horário pra largar o jogo (ex: 22h). Cumpriu, ganha ponto. Assim ele joga menos por escolha dele, não por briga.</p></div>
@@ -521,10 +641,14 @@
     if(AC.state === "suspended") AC.resume();
     return AC;
   }
+  var PACK_SOM = {"8bit":{t:"square", m:2, v:.7}, moedas:{t:"sine", m:1.5, v:1.1}, espacial:{t:"sawtooth", m:.75, v:.5, slide:1.6}};
   function nota(f, t0, dur, tipo, vol){
     var a = ac(); if(!a) return;
+    var P = PACK_SOM[somPack];
+    if(P){ tipo = P.t; f = f * P.m; vol = (vol || .12) * P.v; }
     var o = a.createOscillator(), g = a.createGain(), t = a.currentTime + t0;
     o.type = tipo || "sine"; o.frequency.setValueAtTime(f, t);
+    if(P && P.slide) o.frequency.exponentialRampToValueAtTime(f * P.slide, t + dur);
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || .12, t + .012);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + .03);
@@ -673,8 +797,234 @@
       {i:"🏅", n:"R$ 500 na bike", v:Math.floor(E.bike), m:500, dinheiro:true},
       {i:"🥇", n:"R$ 1.000 na bike", v:Math.floor(E.bike), m:1000, dinheiro:true},
       {i:"🛞", n:"Meia bike", v:Math.floor(E.bike), m:meta/2, dinheiro:true},
-      {i:"🏆", n:"100 missões", v:s.missoes, m:100}
+      {i:"🏆", n:"100 missões", v:s.missoes, m:100},
+      {i:"🎟️", n:"Passe nível 10", v:maxPasse(), m:10},
+      {i:"🏆", n:"Passe completo", v:maxPasse(), m:30}
     ];
+  }
+
+  // ===================== v11: RANK / PASSE / ARMÁRIO =====================
+  var TIERS = [
+    {n:"Bronze",   c:"#e0a066", c2:"#7a4a22"},
+    {n:"Prata",    c:"#e6ecf5", c2:"#7d8796"},
+    {n:"Ouro",     c:"#ffe066", c2:"#a77b12"},
+    {n:"Diamante", c:"#8ff0ff", c2:"#2a7fa8"},
+    {n:"Mestre",   c:"#dcb4ff", c2:"#6b3fa8"},
+    {n:"Lenda",    c:"#ffb066", c2:"#b8361f"}
+  ];
+  var RANK_XP = [0,300,700, 1200,1800,2500, 3300,4200,5200, 6500,8000,10000, 12500,15500,19000, 23000];
+  function rankDe(xp){
+    var i = 0; while(i + 1 < RANK_XP.length && xp >= RANK_XP[i+1]) i++;
+    var tier = Math.min(5, Math.floor(i / 3)), div = tier === 5 ? 0 : (i % 3) + 1;
+    return {i:i, tier:tier, div:div, nome:TIERS[tier].n + (div ? " " + ["I","II","III"][div-1] : ""),
+      base:RANK_XP[i], prox:RANK_XP[i+1] || null, proxNome:i + 1 < RANK_XP.length ? rankNome(i+1) : null};
+  }
+  function rankNome(i){ var t = Math.min(5, Math.floor(i/3)), d = t === 5 ? 0 : (i % 3) + 1; return TIERS[t].n + (d ? " " + ["I","II","III"][d-1] : ""); }
+  var gid = 0;
+  function escudo(tier, div, px){
+    var T = TIERS[tier], id = "sg" + (++gid), txt = tier === 5 ? "★" : ["I","II","III"][div-1] || "";
+    return '<svg width="' + px + '" height="' + Math.round(px*1.12) + '" viewBox="0 0 64 72" aria-hidden="true">' +
+      '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + T.c + '"/><stop offset="1" stop-color="' + T.c2 + '"/></linearGradient></defs>' +
+      '<path d="M32 2 L60 12 V36 C60 54 46 66 32 70 C18 66 4 54 4 36 V12 Z" fill="url(#' + id + ')" stroke="rgba(255,255,255,.55)" stroke-width="2.5"/>' +
+      '<path d="M32 9 L53 16.5 V36 C53 50 43 59.5 32 63 C21 59.5 11 50 11 36 V16.5 Z" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="2"/>' +
+      '<text x="32" y="' + (tier === 5 ? 46 : 44) + '" text-anchor="middle" font-family="Fredoka,Nunito,sans-serif" font-weight="700" font-size="' + (tier === 5 ? 26 : 20) + '" fill="rgba(20,12,4,.82)">' + txt + '</text></svg>';
+  }
+
+  // recompensas cosméticas (custo zero) — liberadas por nível do passe ou por rank
+  var TEMAS = [
+    {id:"roxo",     n:"Roxo clássico", c:"#7a5cff"},
+    {id:"noite",    n:"Noite azul",    c:"#8fd3ff", req:{rank:1}},
+    {id:"floresta", n:"Floresta",      c:"#b7e35b", req:{passe:6}},
+    {id:"lava",     n:"Lava",          c:"#ffb347", req:{passe:13}},
+    {id:"gelo",     n:"Gelo",          c:"#bdf3ff", req:{rank:3}},
+    {id:"neon",     n:"Neon",          c:"#ff6ad5", req:{passe:21}},
+    {id:"ouro",     n:"Ouro real",     c:"#ffd84a", req:{passe:28}}
+  ];
+  var AVATARES = [
+    {id:"🙂"}, {id:"😎", req:{passe:1}}, {id:"🤠", req:{passe:4}}, {id:"🥷", req:{passe:9}}, {id:"🤖", req:{passe:14}},
+    {id:"🐺", req:{passe:19}}, {id:"🐉", req:{passe:23}}, {id:"🦁", req:{passe:29}},
+    {id:"🦊", req:{rank:2}}, {id:"👽", req:{rank:4}}, {id:"👑", req:{rank:5}}
+  ];
+  var MOLDURAS = [
+    {id:"", n:"Nenhuma", e:"⚪"}, {id:"m-dourada", n:"Dourada", e:"🟡", req:{passe:3}}, {id:"m-fogo", n:"Fogo", e:"🔥", req:{passe:11}},
+    {id:"m-neon", n:"Neon", e:"💠", req:{passe:18}}, {id:"m-arco", n:"Arco-íris", e:"🌈", req:{passe:26}}
+  ];
+  var TITULOS = [
+    {id:"Novato da Roça"}, {id:"Caçador de Missões", req:{passe:2}}, {id:"Rei do Combo", req:{passe:7}},
+    {id:"Dono do Baú", req:{passe:12}}, {id:"Mão na Massa", req:{passe:16}}, {id:"Lenda do Duolingo", req:{passe:22}},
+    {id:"Imparável", req:{passe:27}}, {id:"Campeão da Temporada", req:{passe:30}},
+    {id:"Diamante Bruto", req:{rank:3}}, {id:"LENDA", req:{rank:5}}
+  ];
+  var PACKS = [
+    {id:"classico", n:"Clássico", e:"🔔"}, {id:"8bit", n:"8-bit", e:"👾", req:{passe:8}},
+    {id:"moedas", n:"Moedas de ouro", e:"🪙", req:{passe:17}}, {id:"espacial", n:"Espacial", e:"🚀", req:{passe:24}}
+  ];
+  var BONUS_PADRAO = {5:50, 10:100, 15:100, 20:150, 25:150, 30:300};
+  var NOMES_TEMP = ["Despertar","Fogo na Roça","Modo Turbo","Rumo à Bike","Sem Limites","Lenda Viva","Força Total","Novo Patamar","Hora do Show","Na Raça","Topo do Mundo","Final Épico"];
+
+  function maxPasse(){ return E && E.passe ? E.passe.maxNivel : 0; }
+  function liberado(req){
+    if(!req) return true;
+    if(req.passe) return maxPasse() >= req.passe;
+    if(req.rank) return E ? rankDe(E.xp).tier >= req.rank : false;
+    return false;
+  }
+  function reqTxt(req){ return req.passe ? "Passe nv " + req.passe : "Rank " + TIERS[req.rank].n; }
+
+  // trilha do passe: o que cada nível dá
+  function trilha(){
+    var t = {}, add = function(nv, o){ (t[nv] = t[nv] || []).push(o); };
+    var bonus = (E && E.passe && E.passe.bonus) || BONUS_PADRAO;
+    Object.keys(bonus).forEach(function(k){ add(+k, {tipo:"pts", e:"💰", l:"+" + bonus[k] + " pts", d:"+" + bonus[k] + " pontos de verdade"}); });
+    AVATARES.forEach(function(a){ if(a.req && a.req.passe) add(a.req.passe, {tipo:"ava", e:a.id, l:"Avatar", d:"Avatar " + a.id}); });
+    TEMAS.forEach(function(a){ if(a.req && a.req.passe) add(a.req.passe, {tipo:"tema", e:"🎨", l:a.n, d:"Tema " + a.n}); });
+    MOLDURAS.forEach(function(a){ if(a.req && a.req.passe) add(a.req.passe, {tipo:"mold", e:a.e, l:"Moldura " + a.n, d:"Moldura " + a.n}); });
+    TITULOS.forEach(function(a){ if(a.req && a.req.passe) add(a.req.passe, {tipo:"tit", e:"🏷️", l:a.id, d:"Título “" + a.id + "”"}); });
+    PACKS.forEach(function(a){ if(a.req && a.req.passe) add(a.req.passe, {tipo:"som", e:a.e, l:"Som " + a.n, d:"Sons " + a.n}); });
+    return t;
+  }
+  function descNivel(nv){ return (trilha()[nv] || []).map(function(r){ return r.d; }).join(" + "); }
+
+  // visual escolhido (fica salvo no celular)
+  var visual = {};
+  try{ visual = JSON.parse(ls("joao_visual") || "{}") || {}; }catch(e){ visual = {}; }
+  var somPack = "classico";
+  function escolhido(lista, chave, campo){
+    var v = visual[chave], it = lista.filter(function(x){ return (x[campo || "id"]) === v; })[0];
+    return it && liberado(it.req) ? it : lista[0];
+  }
+  function aplicarVisual(){
+    var tema = escolhido(TEMAS, "tema"), ava = escolhido(AVATARES, "ava"), mold = escolhido(MOLDURAS, "mold"),
+        tit = escolhido(TITULOS, "tit"), pack = escolhido(PACKS, "som");
+    if(tema.id === "roxo") document.body.removeAttribute("data-tema"); else document.body.setAttribute("data-tema", tema.id);
+    var av = $("ava"); av.textContent = ava.id; av.className = "ava" + (mold.id ? " " + mold.id : "");
+    $("titulo").textContent = tit.id;
+    somPack = pack.id;
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if(meta) meta.setAttribute("content", getComputedStyle(document.body).getPropertyValue("--bg").trim() || "#17131f");
+  }
+  function equipar(chave, valor){
+    visual[chave] = valor; ls("joao_visual", JSON.stringify(visual)); aplicarVisual(); renderArmario();
+    if(chave === "som") som("coin"); else som("ok");
+  }
+
+  function renderArmario(){
+    if(!E) return;
+    var box = $("armario"), h = "";
+    var bloco = function(titulo, lista, chave, campo, desenho, lg){
+      var atual = escolhido(lista, chave, campo);
+      h += '<div class="armh">' + titulo + '</div><div class="chips2' + (lg ? " lg" : "") + '">' + lista.map(function(it){
+        var ok = liberado(it.req), v = it[campo || "id"], on = atual === it;
+        return '<button class="ck' + (on ? " on" : "") + (ok ? "" : " lk") + '" data-k="' + chave + '" data-v="' + esc(v) + '" data-ok="' + (ok ? 1 : 0) + '"' +
+          (ok ? "" : ' data-req="' + esc(reqTxt(it.req)) + '"') + '>' + desenho(it) + (ok ? "" : '<span class="lkt">🔒 ' + esc(reqTxt(it.req)) + '</span>') + '</button>';
+      }).join("") + '</div>';
+    };
+    bloco("Avatar", AVATARES, "ava", "id", function(a){ return '<span class="ce">' + a.id + '</span>'; });
+    bloco("Título", TITULOS, "tit", "id", function(a){ return '<span>🏷️ ' + esc(a.id) + '</span>'; }, true);
+    bloco("Tema do app", TEMAS, "tema", "id", function(a){ return '<span class="sw" style="background:' + a.c + '"></span><span>' + a.n + '</span>'; });
+    bloco("Moldura", MOLDURAS, "mold", "id", function(a){ return '<span class="ce">' + a.e + '</span><span>' + a.n + '</span>'; });
+    bloco("Sons", PACKS, "som", "id", function(a){ return '<span class="ce">' + a.e + '</span><span>' + a.n + '</span>'; });
+    box.innerHTML = h;
+    box.querySelectorAll(".ck").forEach(function(b){
+      b.addEventListener("click", function(){
+        if(b.dataset.ok !== "1"){ toast("🔒 Libera no " + b.dataset.req, "gold"); return; }
+        equipar(b.dataset.k, b.dataset.v);
+      });
+    });
+  }
+
+  function renderRank(){
+    if(!E) return;
+    var r = rankDe(E.xp);
+    $("rank").innerHTML = '<span class="rk">' + escudo(r.tier, r.div, 20) + esc(r.nome) + '</span>';
+    var pct = r.prox ? Math.round((E.xp - r.base) / (r.prox - r.base) * 100) : 100;
+    $("rankbox").innerHTML = '<div class="rankbig">' + escudo(r.tier, r.div, 78) + '<div style="flex:1;min-width:0">' +
+      '<div class="rn">' + esc(r.nome) + '</div><div class="rx">' + n(E.xp) + ' XP no total' +
+      (r.prox ? ' · faltam <b>' + n(r.prox - E.xp) + '</b> pro ' + esc(r.proxNome) : ' · topo do ranking! 👑') + '</div>' +
+      '<div class="bar"><i style="width:' + pct + '%"></i></div></div></div>' +
+      '<div class="ladder">' + TIERS.map(function(T, t){
+        return '<div class="' + (t <= r.tier ? "on" : "off") + '">' + escudo(t, t === 5 ? 0 : 1, 30) + '<br>' + T.n + '</div>';
+      }).join("") + '</div>';
+  }
+
+  function restante(iso){
+    var ms = new Date(iso) - new Date(); if(ms <= 0) return "acabando…";
+    var d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5), m = Math.floor(ms % 36e5 / 6e4);
+    return d ? d + "d " + h + "h" : h ? h + "h " + m + "min" : m + "min";
+  }
+  function fimDoDia(){ var a = new Date(Date.now() - 3*36e5); return new Date(Date.UTC(a.getUTCFullYear(), a.getUTCMonth(), a.getUTCDate() + 1, 3)).toISOString(); }
+  setInterval(function(){
+    document.querySelectorAll("[data-ate]").forEach(function(el){ el.textContent = restante(el.dataset.ate); });
+  }, 20000);
+
+  function avisoServidor(){
+    return pin ? '<div class="aviso11">⚠️ Pra liberar isso, cola o <b>Código.gs v11</b> no Apps Script e publica uma <b>Nova versão</b>.</div>'
+               : '<div class="aviso11">🎟️ Essa novidade chega quando o <b>pai</b> terminar de atualizar o jogo. Cobra ele 😏</div>';
+  }
+
+  function renderPasse(){
+    if(!E) return;
+    var box = $("passebox");
+    if(!E.passe){ box.innerHTML = avisoServidor(); return; }
+    var P = E.passe, nv = P.nivel, xpN = P.xpNivel, niveis = P.niveis, t = trilha();
+    var dentro = P.xp - nv * xpN, pct = nv >= niveis ? 100 : Math.round(dentro / xpN * 100);
+    var nome = NOMES_TEMP[(P.temporada - 1) % NOMES_TEMP.length];
+    var h = '<div class="pcard"><div class="ps">TEMPORADA ' + P.temporada + '</div><div class="pt">' + nome + '</div>' +
+      '<div class="prow"><div class="pnv">' + nv + '<small>/' + niveis + '</small></div>' +
+      '<div class="pfim">acaba em <b data-ate="' + P.fim + '">' + restante(P.fim) + '</b><br>' + n(P.xp) + ' XP na temporada</div></div>' +
+      '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="barlab">' + (nv >= niveis ? "PASSE COMPLETO! 🏆" : "Faltam " + n(xpN - dentro) + " XP pro nível " + (nv + 1) + " · " + descNivel(nv + 1)) + '</div></div>' +
+      '<div class="sec-sub">Toda missão dá XP. Toca num nível pra ver o prêmio. Os <b style="color:var(--green)">💰 pontos</b> você pega aqui; o resto aparece no <b>Perfil</b>.</div>' +
+      '<div class="ptrack">';
+    for(var i = 1; i <= niveis; i++){
+      var rs = t[i] || [], principal = rs.filter(function(r){ return r.tipo === "pts"; })[0] || rs[0] || {e:"⭐", l:""};
+      var temPts = rs.some(function(r){ return r.tipo === "pts"; }), pego = P.resgatados.indexOf(i) >= 0;
+      var cls = i <= nv ? (temPts && !pego ? "claim" : "got") : "lock";
+      if(i === nv + 1) cls += " prox";
+      if(temPts) cls += " pts";
+      h += '<div class="ptile ' + cls + '" data-nv="' + i + '"><span class="pn">' + i + '</span><span class="pi">' + principal.e + '</span><span class="pl">' +
+        esc(temPts && pego ? "Pego ✓" : principal.l) + '</span></div>';
+    }
+    box.innerHTML = h + '</div>';
+    box.querySelectorAll(".ptile").forEach(function(tl){
+      tl.addEventListener("click", function(){
+        var k = +tl.dataset.nv, d = descNivel(k);
+        if(tl.classList.contains("claim")){
+          var rc = tl.getBoundingClientRect();
+          call("resgatarPasse", [k], function(e){
+            receber(e, null, null, function(){ estoura(rc, 40, OUROS); flutua(rc, "+" + n(((E.passe && E.passe.bonus) || BONUS_PADRAO)[k])); });
+            fila.unshift({s:"🎟️ RECOMPENSA DO PASSE", big:"💰", emo:true, sub:"Nível " + k + ": " + d, som:"coin", cores:OUROS});
+            if(!tocando){ tocando = true; setTimeout(proximo, 500); }
+          });
+          return;
+        }
+        if(k <= nv) toast("✅ Nível " + k + ": " + d + (tl.classList.contains("pts") ? " (já pego)" : " · equipa no Perfil"), "gold");
+        else toast("🔒 Nível " + k + ": " + d, "gold");
+      });
+    });
+  }
+
+  function renderGrafico(){
+    if(!E) return;
+    var box = $("grafbox");
+    if(!E.diasPts){ box.innerHTML = avisoServidor(); return; }
+    var dias = [], hoje = new Date(Date.now() - 3*36e5);
+    for(var i = 6; i >= 0; i--){
+      var d = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), hoje.getUTCDate() - i));
+      var k = d.toISOString().slice(0, 10);
+      dias.push({k:k, v:E.diasPts[k] || 0, l:["dom","seg","ter","qua","qui","sex","sáb"][d.getUTCDay()], hoje:i === 0});
+    }
+    var max = Math.max.apply(null, dias.map(function(x){ return x.v; }).concat([100])), tot = 0, melhor = dias[0];
+    var W = 320, H = 150, bw = 30, gap = (W - bw * 7) / 8, svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="XP por dia na semana">';
+    dias.forEach(function(x, j){
+      tot += x.v; if(x.v > melhor.v) melhor = x;
+      var bh = Math.max(3, Math.round(x.v / max * 100)), X = gap + j * (bw + gap), Y = 118 - bh;
+      svg += '<rect x="' + X + '" y="' + Y + '" width="' + bw + '" height="' + bh + '" rx="7" fill="' + (x.hoje ? "var(--gold)" : x.v ? "var(--green)" : "var(--surface2)") + '"' + (x.hoje ? '' : ' opacity="' + (x.v ? .85 : 1) + '"') + '/>';
+      if(x.v) svg += '<text x="' + (X + bw/2) + '" y="' + (Y - 5) + '" text-anchor="middle" font-size="10" font-weight="800" fill="var(--text)" font-family="Nunito,sans-serif">' + x.v + '</text>';
+      svg += '<text x="' + (X + bw/2) + '" y="136" text-anchor="middle" font-size="11" font-weight="800" fill="' + (x.hoje ? "var(--gold)" : "var(--muted)") + '" font-family="Nunito,sans-serif">' + (x.hoje ? "hoje" : x.l) + '</text>';
+    });
+    box.innerHTML = '<div class="graf">' + svg + '</svg></div><div class="grafinfo"><span>Total: <b>' + n(tot) + ' XP</b></span><span>' +
+      (melhor.v ? 'Melhor dia: <b>' + (melhor.hoje ? "hoje" : melhor.l) + '</b> (' + n(melhor.v) + ')' : 'Bora começar hoje? 💪') + '</span></div>';
   }
 
   // ---------- render ----------
@@ -682,7 +1032,7 @@
     if(!E) return;
     var lv = nivel(E.xp), base = xpDoNivel(lv), prox = xpDoNivel(lv+1);
     $("lv").textContent = lv;
-    $("rank").textContent = RANKS[Math.min(lv-1, RANKS.length-1)];
+    renderRank();
     $("xptext").textContent = n(E.xp) + " XP no total";
     contaPts(E.pontos);
     $("barfill").style.width = Math.round((E.xp-base)/(prox-base)*100) + "%";
@@ -702,7 +1052,9 @@
     var wk = $("wk"), s = E.semana;
     wk.classList.toggle("on", !!s);
     if(s) wk.innerHTML = "📅 Essa semana: <b>" + n(s.pts) + " pts</b> · <b>" + s.missoes + (s.missoes === 1 ? " missão" : " missões") + "</b>";
+    aplicarVisual();
     renderTeto(); renderCombo(); renderBike(); renderPedidos(); renderMissoes(); renderPremios(); renderConquistas(); renderHist();
+    renderPasse(); renderGrafico(); renderArmario();
   }
   function tetoBatido(){ return !!(E && E.teto && E.teto.max > 0 && E.teto.usado >= E.teto.max); }
   function renderTeto(){
@@ -775,60 +1127,78 @@
 
   function itemMissao(m){
     var st = m.semanal ? E.feitoSemana[m.chave] : E.feitoHoje[m.chave];
+    var raio = !m.semanal && E.relampago === m.chave, pts = raio ? m.pts * 2 : m.pts;
     var el = document.createElement("div");
-    el.className = "item" + (st === "feito" ? " done" : "");
+    el.className = "item" + (st === "feito" ? " done" : "") + (raio ? " raio" : "");
     var btn;
     if(st === "feito") btn = '<button class="act fin" disabled>✅ Feito</button>';
     var ped = st === "pendente" ? pedidoDe(m.chave) : null;
     if(st === "feito") {}
     else if(st === "pendente"){
-      var zap = zapLink("Fiz! " + m.emoji + " " + m.nome + " (+" + m.pts + ")" + (m.prova ? " — " + m.prova : "") + ". Segue a prova 👇");
+      var zap = zapLink("Fiz! " + (raio ? "⚡ " : "") + m.emoji + " " + m.nome + " (+" + pts + ")" + (m.prova ? " — " + m.prova : "") + ". Segue a prova 👇");
       btn = '<a class="act zap soJoao" href="' + esc(zap) + '" target="_blank" rel="noopener">📸 Mandar prova</a><button class="act get soPai">Aprovar</button>';
     }
     else btn = '<button class="act go soJoao">Fiz!</button><button class="act go soPai">Marcar</button>';
     var soXp = !m.semanal && st !== "feito" && tetoBatido();
     el.innerHTML = '<span class="emoji">' + esc(m.emoji) + '</span><div class="txt"><div class="name">' + esc(m.nome) + '</div>' +
-      '<div class="val"><b>+' + n(m.pts) + '</b>' + (soXp ? ' <span class="xp">(hoje só XP)</span>' : '') + (ped ? ' · <span class="quando">⏳ enviado ' + quando(ped.quando) + '</span>' : (m.prova ? ' · ' + esc(m.prova) : '')) + '</div></div>' + btn;
+      '<div class="val"><b>+' + n(pts) + '</b>' + (raio ? '<span class="tagx">⚡ x2</span>' : '') + (soXp ? ' <span class="xp">(hoje só XP)</span>' : '') + (ped ? ' · <span class="quando">⏳ enviado ' + quando(ped.quando) + '</span>' : (m.prova ? ' · ' + esc(m.prova) : '')) + '</div></div>' + btn;
     var go = el.querySelector(".act.go.soJoao");
     if(go) go.addEventListener("click", function(){
       var rc = go.getBoundingClientRect();
       call("pedirMissao", [m.chave], function(e){ receber(e, "Enviado! Agora toca em 📸 pra mandar a prova", "gold",
-        function(){ flutua(rc, "⏳ +" + n(m.pts), "#f5c542"); estoura(rc, 14, OUROS); }); });
+        function(){ flutua(rc, "⏳ +" + n(pts), "#f5c542"); estoura(rc, 14, OUROS); }); });
     });
     var pai = el.querySelector(".act.soPai");
     if(pai) pai.addEventListener("click", function(){
       var rc = pai.getBoundingClientRect();
-      call("marcarMissao", [pin, m.chave], function(e){ receber(e, "+" + n(m.pts) + " pontos! 🎉", null,
-        function(){ flutua(rc, "+" + n(m.pts)); estoura(rc, 28); vibra(20); }); });
+      call("marcarMissao", [pin, m.chave], function(e){ receber(e, "+" + n(pts) + " pontos!" + (raio ? " ⚡" : " 🎉"), null,
+        function(){ flutua(rc, "+" + n(pts)); estoura(rc, raio ? 50 : 28); vibra(20); }); });
     });
     return el;
   }
   function renderMissoes(){
-    var d = $("daily"), w = $("weekly");
+    var d = $("daily"), w = $("weekly"), rb = $("raiobox");
     d.innerHTML = ""; w.innerHTML = "";
-    E.cfg.missoes.forEach(function(m){ (m.semanal ? w : d).appendChild(itemMissao(m)); });
+    var rm = E.relampago ? E.cfg.missoes.filter(function(x){ return x.chave === E.relampago; })[0] : null;
+    if(rm){
+      var feito = E.feitoHoje[rm.chave] === "feito", fim = fimDoDia();
+      rb.style.display = "flex";
+      rb.innerHTML = '<span class="ri">⚡</span><div class="rt">' + (feito ? "Relâmpago de hoje concluído! ✅" : "DESAFIO RELÂMPAGO: " + esc(rm.emoji + " " + rm.nome)) +
+        '<small>' + (feito ? "Amanhã tem outro · " : "Hoje vale <b>x2: +" + n(rm.pts * 2) + "</b> · ") + 'troca em <b data-ate="' + fim + '">' + restante(fim) + '</b></small></div>';
+    } else rb.style.display = "none";
+    var lista = E.cfg.missoes.slice();
+    if(rm) lista.sort(function(a, b){ return (b.chave === rm.chave) - (a.chave === rm.chave); });
+    lista.forEach(function(m){ (m.semanal ? w : d).appendChild(itemMissao(m)); });
   }
 
   function renderPremios(){
     var r = E.regras;
     $("premsub").innerHTML = "Você tem <b>" + n(E.disponivel) + " pontos</b> pra gastar. " + n(1000) + " pontos = " + brl(r.reaisPor1000) + ".";
     var box = $("rewards"); box.innerHTML = "";
-    E.cfg.premios.forEach(function(p){
-      var can = E.disponivel >= p.pts;
+    var of = E.oferta, ofP = of ? E.cfg.premios.filter(function(p){ return p.chave === of.chave; })[0] : null;
+    $("ofertabox").innerHTML = ofP ? '<div class="oferta"><div class="obadge">-' + of.desconto + '%</div><div class="os">🔥 OFERTA DA SEMANA</div>' +
+      '<div class="orow"><span class="oe">' + esc(ofP.emoji) + '</span><div class="on2">' + esc(ofP.nome) +
+      '<div class="op"><s>' + n(ofP.pts) + '</s> por <b>' + n(of.preco) + ' pts</b></div></div></div>' +
+      '<div class="oc">⏳ Acaba em <span data-ate="' + of.ate + '">' + restante(of.ate) + '</span> · depois troca o prêmio</div></div>' : '';
+    var lista = E.cfg.premios.slice();
+    if(ofP) lista.sort(function(a, b){ return (b.chave === of.chave) - (a.chave === of.chave); });
+    lista.forEach(function(p){
+      var emOferta = ofP && p.chave === of.chave, preco = emOferta ? of.preco : p.pts;
+      var can = E.disponivel >= preco;
       var el = document.createElement("div");
       el.className = "item";
       el.innerHTML = '<span class="emoji">' + esc(p.emoji) + '</span><div class="txt"><div class="name">' + esc(p.nome) + '</div>' +
-        '<div class="val"><b class="c">' + n(p.pts) + ' pts</b>' + (p.detalhe ? ' · ' + esc(p.detalhe) : '') + '</div></div>' +
-        (can ? '<button class="act get soJoao">Quero!</button>' : '<button class="act off soJoao" disabled>Faltam ' + n(p.pts - E.disponivel) + '</button>') +
+        '<div class="val">' + (emOferta ? '<s>' + n(p.pts) + '</s> ' : '') + '<b class="c">' + n(preco) + ' pts</b>' + (emOferta ? '<span class="tagx of">-' + of.desconto + '%</span>' : '') + (p.detalhe ? ' · ' + esc(p.detalhe) : '') + '</div></div>' +
+        (can ? '<button class="act get soJoao">Quero!</button>' : '<button class="act off soJoao" disabled>Faltam ' + n(preco - E.disponivel) + '</button>') +
         '<button class="act get soPai"' + (can ? '' : ' disabled style="opacity:.4"') + '>Resgatar</button>';
       var q = el.querySelector(".act.get.soJoao");
       if(q) q.addEventListener("click", function(){
-        if(!confirm("Pedir \"" + p.nome + "\" por " + n(p.pts) + " pontos?")) return;
+        if(!confirm("Pedir \"" + p.nome + "\" por " + n(preco) + " pontos?")) return;
         var rc = q.getBoundingClientRect();
         call("pedirPremio", [p.chave], function(e){ receber(e, "Pedido enviado pro pai 🎁", "gold", function(){ estoura(rc, 20, OUROS); }); });
       });
       el.querySelector(".act.get.soPai").addEventListener("click", function(){
-        if(!can || !confirm("Resgatar \"" + p.nome + "\" por " + n(p.pts) + " pontos?")) return;
+        if(!can || !confirm("Resgatar \"" + p.nome + "\" por " + n(preco) + " pontos?")) return;
         var rc = this.getBoundingClientRect();
         call("resgatarPremio", [pin, p.chave], function(e){ receber(e, p.emoji + " Resgatado! Cumpra o combinado 👍", "gold", function(){ estoura(rc, 40, OUROS); }); });
       });
@@ -870,12 +1240,25 @@
       med: Math.floor(Math.max(0, E.bike) / 100),
       ultra: (function(){ var u = (E.hist || []).filter(function(x){ return /SUPER ULTRA/.test(x.t); })[0]; return u ? u.t + "|" + u.b : ""; })(),
       combo: !!(E.combo && E.combo.feito),
+      rankI: rankDe(E.xp).i,
+      passeNv: E.passe ? E.passe.nivel : -1, passeMes: E.passe ? E.passe.mes : "",
       badges: listaConquistas().filter(function(b){ return b.v >= b.m; }).map(function(b){ return b.n; })
     };
     if(antes){
       if(agora.lv > antes.lv) fila.push({s:"SUBIU DE NÍVEL!", big:String(agora.lv), sub:RANKS[Math.min(agora.lv-1, RANKS.length-1)], som:"level", lv:true});
       var icones = {}; listaConquistas().forEach(function(b){ icones[b.n] = b.i; });
       agora.badges.forEach(function(b){ if(antes.badges.indexOf(b) < 0) fila.push({s:"CONQUISTA DESBLOQUEADA", big:icones[b], sub:b, som:"badge", emo:true}); });
+      if(agora.rankI > antes.rankI){
+        var rr = rankDe(E.xp), tierAntes = Math.min(5, Math.floor(antes.rankI / 3));
+        var novos = rr.tier > tierAntes ? TEMAS.concat(AVATARES, TITULOS).filter(function(x){ return x.req && x.req.rank === rr.tier; })
+          .map(function(x){ return x.n || x.id; }).join(", ") : "";
+        fila.push({s:"SUBIU DE RANK!", html:escudo(rr.tier, rr.div, 120), sub:rr.nome + (novos ? " · Desbloqueou: " + novos : ""), som:"level",
+          cores:[TIERS[rr.tier].c, TIERS[rr.tier].c2, "#f1ecdf"]});
+      }
+      if(agora.passeNv > antes.passeNv && antes.passeNv >= 0 && agora.passeMes === antes.passeMes){
+        var nv = agora.passeNv;
+        fila.push({s:"🎟️ PASSE · NÍVEL " + nv, big:String(nv), sub:"Desbloqueou: " + (descNivel(nv) || "XP extra"), som:"badge", cores:OUROS});
+      }
       if(agora.combo && !antes.combo) fila.push({s:"COMBO DO DIA!", big:"🔥", emo:true, sub:"+" + n(E.combo.pts) + " pontos de bônus", som:"level", cores:["#ff8a3d","#f5c542","#f1ecdf","#ff5e3a"]});
       if(agora.ultra && agora.ultra !== antes.ultra){
         var ub = Number(agora.ultra.split("|")[1]) || 0;
@@ -893,8 +1276,9 @@
   function proximo(){
     var f = fila.shift();
     if(!f){ tocando = false; return; }
-    $("lvsmall").textContent = f.s; $("lvnum").textContent = f.big; $("lvrank").textContent = f.sub;
-    $("lvnum").classList.toggle("emo", !!f.emo);
+    $("lvsmall").textContent = f.s; $("lvrank").textContent = f.sub;
+    if(f.html) $("lvnum").innerHTML = f.html; else $("lvnum").textContent = f.big;
+    $("lvnum").classList.toggle("emo", !!f.emo || !!f.html);
     $("lvup").classList.add("on"); som(f.som); vibra([40,60,40]); chuva(f.cores);
     if(f.lv){ var lb = document.querySelector(".lvlbadge"); lb.classList.remove("bump"); void lb.offsetWidth; lb.classList.add("bump"); }
     clearTimeout(lvT); lvT = setTimeout(fechaLv, 5500);
@@ -1021,6 +1405,8 @@
     {i:"🎮", t:"Bem-vindo, João", p:"Aqui tudo que você faz <b>vira ponto</b>. Ponto vira <b>prêmio</b>, <b>V-Bucks</b> ou <b>grana pra bike</b>."},
     {i:"📸", t:"Fez? Toca em Fiz!", p:"Depois toca em <b>📸 Mandar prova</b>: abre o zap do pai com a mensagem pronta, aí é só anexar a foto ou print. Ele aprova e os pontos caem na hora."},
     {i:"🔥", t:"Ofensiva e combo", p:"Faz <b>pelo menos 1 missão por dia</b> pra não quebrar a ofensiva. Fez <b>3 no mesmo dia</b>? Ganha o <b>combo: +100 de bônus</b>."},
+    {i:"🎟️", t:"Passe de Temporada", p:"Todo mês tem um passe com <b>30 níveis</b>. Missão dá XP, XP sobe o passe e libera <b>skins, títulos, molduras, sons</b> e até <b>pontos</b>. E tem <b>rank</b>: Bronze → Lenda!"},
+    {i:"⚡", t:"Relâmpago e oferta", p:"Todo dia uma missão sorteada vale <b>o dobro</b>. E toda semana um prêmio fica <b>mais barato</b> na loja. Fica de olho!"},
     {i:"🚲", t:"Gasta ou guarda?", p:"1.000 pontos = <b>R$ 10 em prêmio</b>… ou <b>R$ 20 na bike</b>, porque o pai dobra. Você escolhe."},
     {i:"📲", t:"Deixa com cara de app", p:"No <b>Safari</b>:", ol:["Toca em <b>Compartilhar</b> (quadrado com a seta pra cima)","Rola a lista <b>pra baixo</b>","Toca em <b>Adicionar à Tela de Início</b>"]}
   ];
@@ -1033,7 +1419,7 @@
     $("tutnext").textContent = k === SLIDES.length - 1 ? "Bora! 👊" : "Próximo";
     $("tut").classList.add("on");
   }
-  function tutClose(){ $("tut").classList.remove("on"); ls("joao_tut5", "1"); }
+  function tutClose(){ $("tut").classList.remove("on"); ls("joao_tut6", "1"); }
   $("tutnext").addEventListener("click", function(){
     if(tIdx < SLIDES.length - 1) tutShow(tIdx + 1);
     else { tutClose(); som("level"); chuva(); }
@@ -1049,8 +1435,8 @@
   }
 
   // ---------- início ----------
-  showMsg(); aplicarModo(); atualizar(false);
-  if(!ls("joao_tut5") && !pin) tutShow(0);
+  aplicarVisual(); showMsg(); aplicarModo(); atualizar(false);
+  if(!ls("joao_tut6") && !pin) tutShow(0);
   setInterval(function(){
     if(document.visibilityState === "visible" && !document.body.classList.contains("busy") && !$("tut").classList.contains("on")) atualizar(false);
   }, 30000);

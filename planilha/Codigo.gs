@@ -1,5 +1,5 @@
 // =====================================================
-//  MISSÕES DO JOÃO — servidor (Google Apps Script) v10
+//  MISSÕES DO JOÃO — servidor (Google Apps Script) v11
 //  A TELA do app agora fica no GitHub:
 //    https://thiagogaldinozicao-source.github.io/missoes-do-joao/
 //  Este código é só a "ponte" entre o app e a planilha.
@@ -32,6 +32,23 @@ const TETO_DIA = 500;
 
 // 📧 Te avisa por e-mail (no seu Gmail) quando o João pedir algo
 const AVISAR_EMAIL = true;
+
+// 🎟️ PASSE DE TEMPORADA: 1 temporada por mês, 30 níveis (igual battle pass)
+const PASSE_XP_NIVEL = 150;   // XP pra subir cada nível do passe (30 níveis = 4.500 XP no mês)
+const PASSE_NIVEIS = 30;
+// Níveis que dão pontos de verdade (ele resgata no app). Máximo ~R$ 8,50 por mês.
+const PASSE_BONUS = { 5: 50, 10: 100, 15: 100, 20: 150, 25: 150, 30: 300 };
+const TEMPORADA_1 = '2026-10'; // mês da Temporada 1
+
+// ⚡ DESAFIO RELÂMPAGO: todo dia 1 missão diária sorteada vale o dobro
+const RELAMPAGO_MULT = 2;
+
+// 🔥 OFERTA DA SEMANA: 1 prêmio com desconto, troca toda segunda-feira
+const OFERTA_DESCONTO = 30;               // % de desconto
+const OFERTA_MIN = 800, OFERTA_MAX = 8000; // só prêmios nessa faixa de pontos entram na oferta
+
+// 📬 RESUMO SEMANAL: te manda um e-mail todo domingo às 20h
+const RESUMO_DOMINGO = true;
 
 // 🌐 Endereço do app (GitHub Pages)
 const SITE_URL = 'https://thiagogaldinozicao-source.github.io/missoes-do-joao/';
@@ -102,7 +119,7 @@ const API = {
   pedirMissao: pedirMissao, pedirPremio: pedirPremio, pedirBike: pedirBike, abrirBau: abrirBau,
   marcarMissao: marcarMissao, resgatarPremio: resgatarPremio, trocarBike: trocarBike,
   guardarBike: guardarBike, ajustarPontos: ajustarPontos, decidir: decidir,
-  desfazerUltimo: desfazerUltimo, zerar: zerar
+  desfazerUltimo: desfazerUltimo, zerar: zerar, resgatarPasse: resgatarPasse
 };
 
 function responder_(obj) {
@@ -240,6 +257,44 @@ function lerHist_() {
   }).filter(function (h) { return !isNaN(h.data); });
 }
 
+// ---------- sorteios do dia / da semana (sempre o mesmo resultado pra mesma data) ----------
+function hash_(s) {
+  let h = 7;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 1000003;
+  return h;
+}
+function mes_(d) { return dia_(d).slice(0, 7); }
+function proxSegunda_(semana) {
+  const p = semana.split('-');
+  return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + 7, 3, 0, 0)); // 00:00 em Brasília
+}
+function fimDoMes_(mes) {
+  const p = mes.split('-');
+  return new Date(Date.UTC(+p[0], +p[1], 1, 3, 0, 0)); // dia 1 do mês seguinte, 00:00 em Brasília
+}
+function numTemporada_(mes) {
+  const a = TEMPORADA_1.split('-'), b = mes.split('-');
+  return Math.max(1, (+b[0] - +a[0]) * 12 + (+b[1] - +a[1]) + 1);
+}
+function relampago_(cfg, dia) {
+  const lista = cfg.missoes.filter(function (m) { return !m.semanal && m.pts < 300; });
+  if (!lista.length) return '';
+  return lista[hash_('raio' + dia) % lista.length].chave;
+}
+function oferta_(cfg, semana) {
+  const lista = cfg.premios.filter(function (p) { return p.pts >= OFERTA_MIN && p.pts <= OFERTA_MAX; });
+  if (!lista.length || !OFERTA_DESCONTO) return null;
+  const p = lista[hash_('oferta' + semana) % lista.length];
+  return { chave: p.chave, desconto: OFERTA_DESCONTO, preco: Math.round(p.pts * (100 - OFERTA_DESCONTO) / 1000) * 10,
+           ate: proxSegunda_(semana).toISOString() };
+}
+function ptsMissao_(m, e) {
+  return (!m.semanal && e.relampago === m.chave) ? m.pts * RELAMPAGO_MULT : m.pts;
+}
+function precoPremio_(p, e) {
+  return (e.oferta && e.oferta.chave === p.chave) ? e.oferta.preco : p.pts;
+}
+
 function getEstado() {
   const cfg = config_();
   const hist = lerHist_();
@@ -251,6 +306,7 @@ function getEstado() {
   let comboFeitas = 0, comboFeito = false, bauHoje = 0;
   const diasBau = {}, ptsDia = {};
   let semPts = 0, semMissoes = 0, ultimo = '';
+  const mesAtual = mes_(new Date()), xpDia = {}, xpMes = {}, passeResg = [];
 
   hist.forEach(function (h) {
     const aprovado = h.status === 'Aprovado';
@@ -266,7 +322,13 @@ function getEstado() {
         ptsDia[dd] = usado + h.pts;
       }
       pontos += ganho; bike += h.bike;
-      if (h.pts > 0) xp += h.pts;
+      if (h.pts > 0) {
+        xp += h.pts;
+        const dx = dia_(h.data);
+        xpDia[dx] = (xpDia[dx] || 0) + h.pts;
+        xpMes[dx.slice(0, 7)] = (xpMes[dx.slice(0, 7)] || 0) + h.pts;
+      }
+      if (h.chave.indexOf('passe:' + mesAtual + ':') === 0) passeResg.push(Number(h.chave.split(':')[2]));
       if (semana_(h.data) === semana) {
         if (ganho > 0) semPts += ganho;
         if (ehMissao) semMissoes++;
@@ -310,6 +372,21 @@ function getEstado() {
     ant = k;
   });
 
+  // gráfico: XP dos últimos 35 dias
+  const diasPts = {};
+  let dg = hoje;
+  for (let i = 0; i < 35; i++) { if (xpDia[dg]) diasPts[dg] = xpDia[dg]; dg = diaAnterior_(dg); }
+
+  // passe de temporada
+  const nivelDe = function (x) { return Math.min(PASSE_NIVEIS, Math.floor((x || 0) / PASSE_XP_NIVEL)); };
+  let maxNivel = 0;
+  Object.keys(xpMes).forEach(function (k) { maxNivel = Math.max(maxNivel, nivelDe(xpMes[k])); });
+  const passe = {
+    mes: mesAtual, temporada: numTemporada_(mesAtual), xp: xpMes[mesAtual] || 0, nivel: nivelDe(xpMes[mesAtual]),
+    maxNivel: maxNivel, xpNivel: PASSE_XP_NIVEL, niveis: PASSE_NIVEIS, bonus: PASSE_BONUS,
+    resgatados: passeResg, fim: fimDoMes_(mesAtual).toISOString()
+  };
+
   const ultimos = hist.slice(-12).reverse().map(function (h) {
     return { t: h.desc, v: h.pts, b: h.bike, s: h.status, tipo: h.tipo, o: h.obs };
   });
@@ -322,6 +399,8 @@ function getEstado() {
     teto: { usado: ptsDia[hoje] || 0, max: TETO_DIA },
     semana: { pts: semPts, missoes: semMissoes },
     bauHoje: bauHoje, login: login,
+    diasPts: diasPts, passe: passe, versao: 11,
+    relampago: relampago_(cfg, hoje), oferta: oferta_(cfg, semana),
     stats: { missoes: missoes, premios: premios, trocasBike: trocasBike, porChave: porChave },
     cfg: cfg,
     regras: { reaisPor1000: REAIS_POR_1000, bikeMeta: BIKE_META, bikePontos: BIKE_PONTOS, bikeReais: BIKE_REAIS }
@@ -411,8 +490,9 @@ function pedirMissao(chave) {
     const m = acharMissao_(chave), e = getEstado();
     if (e.pendentes.length >= 30) throw new Error('Muitos pedidos esperando o pai');
     if (jaFeita_(e, m)) throw new Error(m.semanal ? 'Essa já foi essa semana' : 'Essa já foi hoje');
-    novaLinha_(m.semanal ? 'Meta' : 'Missão', m.emoji + ' ' + m.nome, m.pts, '', 'Pendente', m.chave, 'João');
-    avisarPai_('fez ' + m.emoji + ' ' + m.nome + ' (+' + m.pts + ')');
+    const pts = ptsMissao_(m, e), raio = pts !== m.pts ? '⚡ ' : '';
+    novaLinha_(m.semanal ? 'Meta' : 'Missão', raio + m.emoji + ' ' + m.nome, pts, '', 'Pendente', m.chave, 'João');
+    avisarPai_('fez ' + raio + m.emoji + ' ' + m.nome + ' (+' + pts + ')');
     return getEstado();
   });
 }
@@ -421,9 +501,10 @@ function pedirPremio(chave) {
   return comLock_(function () {
     const p = acharPremio_(chave), e = getEstado();
     if (e.pendentes.length >= 30) throw new Error('Muitos pedidos esperando o pai');
-    if (e.disponivel < p.pts) throw new Error('Pontos insuficientes');
-    novaLinha_('Prêmio', p.emoji + ' ' + p.nome, -p.pts, '', 'Pendente', p.chave, 'João');
-    avisarPai_('quer o prêmio ' + p.emoji + ' ' + p.nome + ' (' + p.pts + ' pontos)');
+    const preco = precoPremio_(p, e), of = preco !== p.pts ? ' (oferta -' + OFERTA_DESCONTO + '%)' : '';
+    if (e.disponivel < preco) throw new Error('Pontos insuficientes');
+    novaLinha_('Prêmio', p.emoji + ' ' + p.nome + of, -preco, '', 'Pendente', p.chave, 'João');
+    avisarPai_('quer o prêmio ' + p.emoji + ' ' + p.nome + of + ' (' + preco + ' pontos)');
     return getEstado();
   });
 }
@@ -438,6 +519,47 @@ function pedirBike() {
   });
 }
 
+// 🎟️ João resgata os pontos de um nível do passe
+function resgatarPasse(nivel) {
+  return comLock_(function () {
+    const e = getEstado(), n = Number(nivel), bonus = PASSE_BONUS[n];
+    if (!bonus) throw new Error('Esse nível não tem pontos pra resgatar');
+    if (e.passe.nivel < n) throw new Error('Ainda não chegou no nível ' + n + ' do passe');
+    if (e.passe.resgatados.indexOf(n) >= 0) throw new Error('Esse já foi resgatado nessa temporada');
+    novaLinha_('Bônus', '🎟️ Passe nível ' + n + ' (Temporada ' + e.passe.temporada + ')', bonus, '', 'Aprovado',
+      'passe:' + e.passe.mes + ':' + n, 'João');
+    return getEstado();
+  });
+}
+
+// 📬 E-mail de domingo com o resumo da semana
+function resumoSemanal() {
+  const e = getEstado(), semana = semana_(new Date());
+  const feitas = {}, recusas = [];
+  let premiosTxt = [];
+  lerHist_().forEach(function (h) {
+    if (semana_(h.data) !== semana) return;
+    if (h.status === 'Aprovado' && (h.tipo === 'Missão' || h.tipo === 'Meta')) feitas[h.desc] = (feitas[h.desc] || 0) + 1;
+    if (h.status === 'Aprovado' && h.tipo === 'Prêmio') premiosTxt.push(h.desc);
+    if (h.status === 'Recusado') recusas.push(h.desc);
+  });
+  const lista = Object.keys(feitas).sort(function (a, b) { return feitas[b] - feitas[a]; })
+    .map(function (k) { return '<li>' + k + (feitas[k] > 1 ? ' <b>×' + feitas[k] + '</b>' : '') + '</li>'; }).join('');
+  const br = function (v) { return 'R$ ' + Number(v).toLocaleString('pt-BR'); };
+  const html =
+    '<div style="font-family:Arial,sans-serif;font-size:15px;color:#222">' +
+    '<h2 style="margin:0 0 8px">🎮 Semana do João</h2>' +
+    '<p>📅 <b>' + e.semana.pts + ' pontos</b> na semana · <b>' + e.semana.missoes + ' missões</b> aprovadas</p>' +
+    '<p>🔥 Ofensiva: <b>' + e.ofensiva + ' dias</b> · 🎟️ Passe: <b>nível ' + e.passe.nivel + '/' + PASSE_NIVEIS + '</b></p>' +
+    '<p>💰 Saldo: <b>' + e.pontos + ' pontos</b> · 🚲 Bike: <b>' + br(e.bike) + ' de ' + br(BIKE_META) + '</b></p>' +
+    (lista ? '<p><b>O que ele fez:</b></p><ul>' + lista + '</ul>' : '<p>😴 Nenhuma missão aprovada essa semana.</p>') +
+    (premiosTxt.length ? '<p><b>Prêmios resgatados:</b> ' + premiosTxt.join(', ') + '</p>' : '') +
+    (recusas.length ? '<p><b>Recusados:</b> ' + recusas.join(', ') + '</p>' : '') +
+    (e.pendentes.length ? '<p>⏳ <b>' + e.pendentes.length + ' pedido(s) esperando você aprovar.</b></p>' : '') +
+    '<p><a href="' + SITE_URL + '">👉 Abrir o app das Missões</a></p></div>';
+  MailApp.sendEmail({ to: Session.getEffectiveUser().getEmail(), subject: '📬 Resumo da semana do João', htmlBody: html });
+}
+
 // ---------- PAI: faz direto ----------
 function marcarMissao(senha, chave) {
   exigirSenha_(senha);
@@ -449,7 +571,8 @@ function marcarMissao(senha, chave) {
       const pend = lerHist_().filter(function (h) { return h.status === 'Pendente' && h.chave === m.chave; }).pop();
       if (pend) { aba_().getRange(pend.linha, 6).setValue('Aprovado'); combo_(pend.data); return getEstado(); }
     }
-    novaLinha_(m.semanal ? 'Meta' : 'Missão', m.emoji + ' ' + m.nome, m.pts, '', 'Aprovado', m.chave, 'Pai');
+    const pts = ptsMissao_(m, e);
+    novaLinha_(m.semanal ? 'Meta' : 'Missão', (pts !== m.pts ? '⚡ ' : '') + m.emoji + ' ' + m.nome, pts, '', 'Aprovado', m.chave, 'Pai');
     combo_();
     return getEstado();
   });
@@ -459,8 +582,9 @@ function resgatarPremio(senha, chave) {
   exigirSenha_(senha);
   return comLock_(function () {
     const p = acharPremio_(chave), e = getEstado();
-    if (e.disponivel < p.pts) throw new Error('Pontos insuficientes');
-    novaLinha_('Prêmio', p.emoji + ' ' + p.nome, -p.pts, '', 'Aprovado', p.chave, 'Pai');
+    const preco = precoPremio_(p, e), of = preco !== p.pts ? ' (oferta -' + OFERTA_DESCONTO + '%)' : '';
+    if (e.disponivel < preco) throw new Error('Pontos insuficientes');
+    novaLinha_('Prêmio', p.emoji + ' ' + p.nome + of, -preco, '', 'Aprovado', p.chave, 'Pai');
     return getEstado();
   });
 }
@@ -550,6 +674,13 @@ function zerar(senha) {
 // Rode 1x pelo editor: cria as abas e autoriza
 function configurar() {
   aba_(); config_();
-  if (AVISAR_EMAIL) MailApp.getRemainingDailyQuota(); // pede a permissão de e-mail
+  if (AVISAR_EMAIL || RESUMO_DOMINGO) MailApp.getRemainingDailyQuota(); // pede a permissão de e-mail
+  // agenda o resumo de domingo (apaga o antigo antes, pra não duplicar)
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'resumoSemanal') ScriptApp.deleteTrigger(t);
+  });
+  if (RESUMO_DOMINGO) {
+    ScriptApp.newTrigger('resumoSemanal').timeBased().onWeekDay(ScriptApp.WeekDay.SUNDAY).atHour(20).inTimezone(TZ).create();
+  }
   Logger.log('Tudo certo! Abas Historico, Missoes e Premios prontas.');
 }
