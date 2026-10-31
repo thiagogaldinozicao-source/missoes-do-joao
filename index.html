@@ -642,9 +642,11 @@
   ];
 
 
-  // 📲 WhatsApp do pai (só números, com 55 + DDD)
-  var ZAP_PAI = "5535991580070";
-  function zapLink(txt){ return "https://wa.me/" + ZAP_PAI + "?text=" + encodeURIComponent(txt); }
+  // Contato configurado no servidor, fora do repositório.
+  function zapLink(txt){
+    var numero = E && E.contatoWhatsapp;
+    return /^[0-9]{10,15}$/.test(numero || "") ? "https://wa.me/" + numero + "?text=" + encodeURIComponent(txt) : "#";
+  }
 
   var $ = function(id){ return document.getElementById(id); };
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -1055,6 +1057,7 @@
   // ---------- render ----------
   function render(){
     if(!E) return;
+  $("ultrazap").href = zapLink("Pai, trabalhei hoje! 💪 Fiz: ___ e ganhei R$ ___. Bora o SUPER ULTRA BÔNUS? 🚲");
     var lv = nivel(E.xp), base = xpDoNivel(lv), prox = xpDoNivel(lv+1);
     $("lv").textContent = lv;
     renderRank();
@@ -1397,7 +1400,7 @@
   $("bikeadd").addEventListener("click", function(){ lancarBike(1); });
 
   // ---------- 💪 SUPER ULTRA BÔNUS: trabalhou, o pai paga o mesmo tanto ----------
-  $("ultrazap").href = zapLink("Pai, trabalhei hoje! 💪 Fiz: ___ e ganhei R$ ___. Bora o SUPER ULTRA BÔNUS? 🚲");
+
   $("ultrabtn").addEventListener("click", function(){
     var v = prompt("Quanto o João ganhou trabalhando? (R$)");
     if(!v) return;

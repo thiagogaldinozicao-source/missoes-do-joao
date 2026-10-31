@@ -1,0 +1,23 @@
+const fs=require('fs'),vm=require('vm'),http=require('http'),assert=require('assert');
+const {chromium}=require('playwright');
+const root=process.cwd();
+const props={SENHA_PAI:'fake-test-password',WHATSAPP_PAI:'5500000000000'};
+const ctx={PropertiesService:{getScriptProperties:()=>({getProperty:k=>props[k]||null})},Utilities:{formatDate:(d,t,f)=>f==='yyyy-MM-dd'?d.toISOString().slice(0,10):f==='yyyy-MM'?d.toISOString().slice(0,7):'1'}};
+vm.createContext(ctx);vm.runInContext(fs.readFileSync('planilha/Codigo.gs','utf8'),ctx);
+assert.equal(ctx.checarSenha('wrong'),false);assert.equal(ctx.checarSenha(props.SENHA_PAI),true);
+for(const value of [undefined,null,'',123]) assert.equal(ctx.checarSenha(value),false);
+delete props.SENHA_PAI;assert.throws(()=>ctx.checarSenha(''),/não configurada/);props.SENHA_PAI='fake-test-password';
+assert.throws(()=>ctx.marcarMissao('wrong','m:teste'),/Senha/);
+assert.equal(ctx.contatoWhatsapp_(),props.WHATSAPP_PAI);props.WHATSAPP_PAI='javascript:bad';assert.equal(ctx.contatoWhatsapp_(),'');props.WHATSAPP_PAI='5500000000000';
+vm.runInContext(`lerHist_=()=>[]; config_=()=>({missoes:[{chave:'m:teste',nome:'Missão teste',emoji:'📚',pts:100,prova:'Foto',semanal:false}],premios:[]});`,ctx);
+let state=ctx.getEstado();
+const server=http.createServer((req,res)=>{let p=new URL(req.url,'http://localhost').pathname;let f=root+p;try{const b=fs.readFileSync(f.endsWith('/')?f+'index.html':f);res.setHeader('Content-Type',f.endsWith('.html')||f.endsWith('/')?'text/html':'application/octet-stream');res.end(b);}catch{res.statusCode=404;res.end();}});
+(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({headless:true});try{
+const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(()=>localStorage.setItem('joao_tut6','1'));
+await page.route('https://script.google.com/**',async route=>{const {fn,args}=route.request().postDataJSON();let data;if(fn==='getEstado')data=state;else if(fn==='checarSenha')data=ctx.checarSenha(args[0]);else if(fn==='pedirMissao'){state.feitoHoje['m:teste']='pendente';state.pendentes=[{id:'fake-id',chave:'m:teste',desc:'Missão teste',pts:100,tipo:'Missão',quando:new Date().toISOString()}];data=state;}else throw Error('Unexpected API '+fn);await route.fulfill({json:{ok:true,data}});});
+const url='http://127.0.0.1:'+server.address().port;
+await page.goto(url+'/');await page.locator('#daily .act.go.soJoao').click();await page.locator('a.zap').first().waitFor();assert((await page.locator('a.zap').first().getAttribute('href')).startsWith('https://wa.me/'+props.WHATSAPP_PAI));
+page.once('dialog',d=>d.accept('wrong'));await page.locator('#modebtn').click();await page.waitForTimeout(200);assert(!await page.locator('body').evaluate(e=>e.classList.contains('pai')));
+page.once('dialog',d=>d.accept(props.SENHA_PAI));await page.locator('#modebtn').click();await page.waitForFunction(()=>document.body.classList.contains('pai'));await page.locator('#modebtn').click();await page.waitForFunction(()=>!document.body.classList.contains('pai'));assert.deepEqual(errors,[]);
+console.log('PASS: server auth valid/invalid/missing; protected mutation denied; contact validation; Playwright mission/proof, wrong/right login, logout, no page errors.');
+}finally{await browser.close();server.close();}})().catch(e=>{console.error(e);server.close();process.exitCode=1});
