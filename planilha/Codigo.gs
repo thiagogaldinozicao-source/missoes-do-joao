@@ -9,8 +9,8 @@
 //   • aba "Premios"   → lista de prêmios (pode editar direto aqui!)
 // =====================================================
 
-// 👇 SENHA DO PAI
-const SENHA_PAI = '1221';
+// Configure SENHA_PAI e WHATSAPP_PAI nas Propriedades do script.
+// Nunca coloque os valores no código ou no HTML.
 
 // 💰 QUANTO VALE O PONTO
 const REAIS_POR_1000 = 10;        // 1.000 pontos = R$ 10 em prêmio
@@ -440,6 +440,7 @@ function getEstado() {
   });
 
   return {
+    contatoWhatsapp: contatoWhatsapp_(),
     pontos: pontos, disponivel: pontos - reservado, xp: xp, bike: bike,
     hist: ultimos, ultimo: ultimo, pendentes: pendentes, feitoHoje: feitoHoje, feitoSemana: feitoSemana,
     ofensiva: ofensiva, maiorOfensiva: maior,
@@ -456,7 +457,15 @@ function getEstado() {
 }
 
 // ---------- senha ----------
-function checarSenha(senha) { return String(senha) === SENHA_PAI; }
+function checarSenha(senha) {
+  const esperada = PropertiesService.getScriptProperties().getProperty('SENHA_PAI');
+  if (!esperada) throw new Error('Senha do pai não configurada no servidor');
+  return typeof senha === 'string' && senha === esperada;
+}
+function contatoWhatsapp_() {
+  const numero = PropertiesService.getScriptProperties().getProperty('WHATSAPP_PAI') || '';
+  return /^\d{10,15}$/.test(numero) ? numero : '';
+}
 function exigirSenha_(senha) { if (!checarSenha(senha)) throw new Error('Senha do pai errada'); }
 
 function comLock_(fn) {
